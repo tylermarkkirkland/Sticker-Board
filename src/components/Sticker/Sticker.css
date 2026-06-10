@@ -1,0 +1,32 @@
+.sticker {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  /* Drop shadow gives the cut-out, lifted-from-the-desk feel. */
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45));
+  transition: filter 0.25s ease;
+  will-change: transform;
+}
+
+.sticker:hover {
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.55));
+}
+
+.sticker:active {
+  cursor: grabbing;
+}
+
+/* Visible focus ring for keyboard users on interactive stickers. */
+.sticker:focus-visible {
+  outline: none;
+}
+.sticker:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 18px;
+  border: 2.5px solid var(--sky);
+  box-shadow: 0 0 0 4px rgba(92, 198, 255, 0.25);
+  pointer-events: none;
+}

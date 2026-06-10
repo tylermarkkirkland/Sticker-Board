@@ -1,0 +1,72 @@
+.sticky-note {
+  position: relative;
+  width: 210px;
+  min-height: 200px;
+  padding: 30px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  /* Warm paper gradient with a faint top-light. */
+  background:
+    linear-gradient(160deg, #fff6c4 0%, #ffe89a 60%, #ffe07f 100%);
+  /* Folded-corner peel at bottom-right. */
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 86% 100%, 0 100%);
+  border-radius: 3px;
+  color: #5a4a16;
+}
+
+/* The little peeled corner shadow. */
+.sticky-note::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.16), transparent 65%);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Strip of washi tape across the top. */
+.sticky-note-tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2.5deg);
+  width: 86px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.42);
+  border-left: 1px dashed rgba(255, 255, 255, 0.6);
+  border-right: 1px dashed rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(1px);
+}
+
+.sticky-note-text {
+  flex: 1;
+  font-family: 'Caveat', cursive;
+  font-size: 25px;
+  line-height: 1.25;
+  font-weight: 600;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  caret-color: #b8902a;
+}
+
+.sticky-note.is-editing .sticky-note-text {
+  /* Faint baseline ruling appears while editing. */
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 30px,
+    rgba(180, 144, 42, 0.22) 31px
+  );
+}
+
+.sticky-note-edithint {
+  margin-top: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(90, 74, 22, 0.5);
+  align-self: flex-start;
+}

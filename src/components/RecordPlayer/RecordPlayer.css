@@ -1,0 +1,117 @@
+.record-player {
+  position: relative;
+  width: 210px;
+  padding: 20px 20px 16px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #2a2d34 0%, #1a1c21 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.record-plate {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  margin: 0 auto;
+}
+
+.record-vinyl {
+  display: block;
+  border-radius: 50%;
+}
+
+.record-player.is-playing .record-vinyl {
+  box-shadow: 0 0 26px rgba(255, 107, 94, 0.35);
+  border-radius: 50%;
+}
+
+/* Tonearm built from three simple pieces, pivoting at the base. */
+.record-tonearm {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  width: 70px;
+  height: 70px;
+  transform-origin: top right;
+}
+
+.tonearm-base {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #c9ccd2;
+  box-shadow: inset 0 0 0 3px #8a8d93;
+}
+
+.tonearm-rod {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 56px;
+  height: 4px;
+  background: linear-gradient(90deg, #d7dade, #a4a7ad);
+  border-radius: 2px;
+  transform-origin: right center;
+  transform: rotate(48deg);
+}
+
+.tonearm-head {
+  position: absolute;
+  top: 44px;
+  left: 6px;
+  width: 12px;
+  height: 8px;
+  background: #2a2d34;
+  border: 1px solid #c9ccd2;
+  border-radius: 2px;
+}
+
+.record-caption {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* Little equalizer bars next to the caption. */
+.record-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.record-eq i {
+  width: 3px;
+  height: 4px;
+  background: var(--coral);
+  border-radius: 1px;
+}
+.record-player.is-playing .record-eq i {
+  animation: eq 0.8s ease-in-out infinite;
+}
+.record-player.is-playing .record-eq i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.record-player.is-playing .record-eq i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.record-player.is-playing .record-eq i:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+@keyframes eq {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 12px;
+  }
+}

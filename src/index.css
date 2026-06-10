@@ -1,0 +1,53 @@
+/* ---- Global reset + base ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Dark cinematic palette */
+  --bg-deep: #0a0b0d;
+  --bg-near: #121419;
+  --ink: #f4f1ea;
+  --ink-dim: #a7a39b;
+
+  /* Accent hues for stickers */
+  --amber: #ffd34e;
+  --paper: #fff7d6;
+  --coral: #ff6b5e;
+  --mint: #6fe3c0;
+  --violet: #9b8cff;
+  --sky: #5cc6ff;
+
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

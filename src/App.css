@@ -1,0 +1,77 @@
+.canvas {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* Soft radial vignette pulls focus to the center of the desk. */
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      #1c2027 0%,
+      #14161b 42%,
+      var(--bg-deep) 100%
+    );
+}
+
+/* Faint dotted "desk mat" grid for spatial grounding. */
+.canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* Subtle film grain overlay — adds the analog, tactile quality. */
+.canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Quiet intro header, top-left, sits beneath the stickers. */
+.canvas-intro {
+  position: absolute;
+  top: 38px;
+  left: 44px;
+  z-index: 0;
+  max-width: 320px;
+  pointer-events: none;
+}
+
+.canvas-intro h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.canvas-intro p {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(167, 163, 155, 0.6);
+}
+
+/* Hint chip, bottom-center, gently fades. */
+.canvas-hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(167, 163, 155, 0.45);
+  pointer-events: none;
+}
