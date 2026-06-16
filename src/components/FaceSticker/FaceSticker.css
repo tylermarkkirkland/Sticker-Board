@@ -1,0 +1,59 @@
+.face {
+  position: relative;
+  user-select: none;
+}
+
+.face-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* ── Bubble wrapper — positioned on the face, animates as one unit ── */
+.face-bubble-wrap {
+  position: absolute;
+  top: 4px;
+  right: -64px;
+  transform-origin: bottom left;
+  pointer-events: none;
+}
+
+/* ── Bubble body ─────────────────────────────────────────────── */
+.face-bubble {
+  position: relative;
+  z-index: 2;
+  width: 96px;
+  padding: 10px 12px;
+  background: #fffdf4;
+  border: none;
+  border-radius: 999px;
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1a1a1a;
+  text-align: center;
+  box-shadow: none;
+}
+
+/* Wider bubble for longer text */
+.face-bubble--wide {
+  width: 124px;
+}
+
+/* ── Curved SVG tail — sits behind the bubble via z-index ──── */
+.face-bubble-tail--wide {
+  bottom: 8px;
+  left: 16px;
+}
+
+.face-bubble-tail {
+  position: absolute;
+  bottom: -20px;
+  left: 10px;
+  width: 30px;
+  height: 24px;
+  z-index: 1;
+  pointer-events: none;
+}

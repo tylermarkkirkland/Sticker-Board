@@ -1,0 +1,86 @@
+.crate {
+  position: relative;
+  width: 128px;
+  /* Height matches crate-back exactly — no empty space above the visible wood. */
+  height: 108px;
+}
+
+/* Back wall of the bin — normal block so crate height matches the visual. */
+.crate-back {
+  width: 128px;
+  height: 108px;
+  border-radius: 9px 9px 6px 6px;
+  background: linear-gradient(160deg, #7a5638 0%, #4a3120 100%);
+  box-shadow: 0 0 0 4px #f4f1ea;
+}
+
+/* Front lip of the bin — renders at pad level above records */
+.crate-front-floating {
+  border-radius: 6px;
+  background: linear-gradient(160deg, #6b4a2f 0%, #3c2819 100%);
+  box-shadow:
+    0 0 0 4px #f4f1ea,
+    inset 0 5px 9px rgba(0, 0, 0, 0.4);
+}
+
+/* Records that float at pad level */
+.record-floating {
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+.record-floating:active { cursor: grabbing; }
+
+.record-disc {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, #0d0d10 0 3px, #15151a 3px 4px);
+  box-shadow: 0 0 0 3px #f4f1ea; /* die-cut border */
+}
+.record-disc.is-spinning {
+  animation: disc-spin 2.4s linear infinite;
+}
+.record-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--label, #ff6b5e);
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+.record-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #0d0d10;
+  z-index: 1;
+}
+
+/* A docked record sits on the platter (above the front lip) and ignores the
+   crate's stacking — needs very high z-index to stay above player body. */
+.record-floating.is-docked {
+  z-index: 100 !important;
+}
+
+@keyframes disc-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record-disc.is-spinning {
+    animation: none;
+  }
+}

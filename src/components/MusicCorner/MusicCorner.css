@@ -1,0 +1,254 @@
+.music-corner {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+/* ---- Turntable (player) ---- */
+.turntable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  will-change: transform;
+}
+
+/* Sticker-style body: rounded square with a white die-cut border. */
+.turntable-body {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, #2a2d34 0%, #16181c 100%);
+  box-shadow: 0 0 0 4px #f4f1ea; /* die-cut border to match the other stickers */
+}
+
+.platter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #1b1b1f 0%, #0c0c0e 70%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  display: grid;
+  place-items: center;
+}
+
+.platter-spindle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #e7e9ec;
+  z-index: 0; /* below a docked record */
+}
+
+/* Tonearm */
+.tonearm {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  width: 56px;
+  height: 56px;
+  transform-origin: top right;
+}
+.tonearm-base {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #c9ccd2;
+  box-shadow: inset 0 0 0 3px #8a8d93;
+}
+.tonearm-rod {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 46px;
+  height: 3px;
+  background: linear-gradient(90deg, #d7dade, #a4a7ad);
+  border-radius: 2px;
+  transform-origin: right center;
+  transform: rotate(48deg);
+}
+.tonearm-head {
+  position: absolute;
+  top: 36px;
+  left: 5px;
+  width: 10px;
+  height: 7px;
+  background: #2a2d34;
+  border: 1px solid #c9ccd2;
+  border-radius: 2px;
+}
+
+/* Caption / now-playing */
+.turntable-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 30px;
+  text-align: center;
+}
+.np-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  max-width: 150px;
+}
+.np-hint {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.np-link {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--sky);
+  text-decoration: none;
+}
+.np-link:hover {
+  text-decoration: underline;
+}
+.np-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+}
+.np-eq i {
+  width: 3px;
+  height: 4px;
+  background: var(--coral);
+  border-radius: 1px;
+  animation: eq 0.8s ease-in-out infinite;
+}
+.np-eq i:nth-child(2) { animation-delay: 0.15s; }
+.np-eq i:nth-child(3) { animation-delay: 0.3s; }
+.np-eq i:nth-child(4) { animation-delay: 0.45s; }
+
+/* ---- Crate of records ---- */
+.crate {
+  position: relative;
+  width: 104px;
+  height: 150px;
+}
+
+/* Back wall of the bin — sits BEHIND the records. */
+.crate-back {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 92px;
+  border-radius: 9px 9px 6px 6px;
+  background: linear-gradient(160deg, #7a5638 0%, #4a3120 100%);
+  box-shadow: 0 0 0 4px #f4f1ea;
+  z-index: 0;
+}
+/* Front lip of the bin — sits IN FRONT of the records so they look filed in
+   (their lower half is tucked behind this lip). */
+.crate-front {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #6b4a2f 0%, #3c2819 100%);
+  box-shadow:
+    0 0 0 4px #f4f1ea,
+    inset 0 5px 9px rgba(0, 0, 0, 0.4);
+  z-index: 6;
+}
+
+/* Each record is independently draggable, nestled in the crate (tucked behind
+   the front lip), slightly offset per slot. */
+.record {
+  position: absolute;
+  bottom: 30px;
+  width: 96px;
+  height: 96px;
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+  z-index: 2;
+}
+.record[data-slot='0'] { left: 6px; }
+.record[data-slot='1'] { left: 15px; }
+.record[data-slot='2'] { left: 24px; }
+.record:active { cursor: grabbing; }
+
+.record-disc {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, #0d0d10 0 3px, #15151a 3px 4px);
+  box-shadow: 0 0 0 3px #f4f1ea; /* die-cut border */
+}
+.record-disc.is-spinning {
+  animation: disc-spin 2.4s linear infinite;
+}
+.record-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--label, #ff6b5e);
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+.record-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #0d0d10;
+  z-index: 1;
+}
+
+/* A docked record sits on the platter (above the front lip) and ignores the
+   crate's stacking — its inline zIndex from bringToFront keeps it on top. */
+.record.is-docked {
+  z-index: 10;
+}
+
+@keyframes disc-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes eq {
+  0%, 100% { height: 4px; }
+  50% { height: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .platter-disc.is-spinning,
+  .record-disc.is-spinning,
+  .np-eq i {
+    animation: none;
+  }
+}

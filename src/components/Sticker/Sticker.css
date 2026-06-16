@@ -3,18 +3,28 @@
   cursor: grab;
   user-select: none;
   touch-action: none;
-  /* Drop shadow gives the cut-out, lifted-from-the-desk feel. */
-  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45));
-  transition: filter 0.25s ease;
+  /* Placed stickers lie flat on the board — no shadow at rest or on hover. */
+  filter: none;
+  /* Only animate the shadow here — transform is owned by Framer Motion. */
+  transition: filter 0.22s ease;
   will-change: transform;
 }
 
-.sticker:hover {
-  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.55));
+/* Lifted off the board while dragging: a tight, close shadow appears so it
+   reads as lifted just an inch off the desk. It vanishes the moment it's
+   placed. */
+.sticker.is-lifted {
+  cursor: grabbing;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
 }
 
 .sticker:active {
   cursor: grabbing;
+}
+
+/* The inner layer carries the artwork + ambient bob. */
+.sticker-inner {
+  will-change: transform;
 }
 
 /* Visible focus ring for keyboard users on interactive stickers. */

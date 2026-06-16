@@ -1,117 +1,166 @@
-.record-player {
+.turntable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform;
+}
+
+/* Sticker-style body: rounded square with a white die-cut border. */
+.turntable-body {
   position: relative;
-  width: 210px;
-  padding: 20px 20px 16px;
-  border-radius: 20px;
-  background: linear-gradient(150deg, #2a2d34 0%, #1a1c21 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  width: 150px;
+  height: 150px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, #2a2d34 0%, #16181c 100%);
+  box-shadow: 0 0 0 4px #f4f1ea; /* die-cut border to match the other stickers */
 }
 
-.record-plate {
-  position: relative;
-  width: 170px;
-  height: 170px;
-  margin: 0 auto;
-}
-
-.record-vinyl {
-  display: block;
-  border-radius: 50%;
-}
-
-.record-player.is-playing .record-vinyl {
-  box-shadow: 0 0 26px rgba(255, 107, 94, 0.35);
-  border-radius: 50%;
-}
-
-/* Tonearm built from three simple pieces, pivoting at the base. */
-.record-tonearm {
+.platter {
   position: absolute;
-  top: -6px;
-  right: -4px;
-  width: 70px;
-  height: 70px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #1b1b1f 0%, #0c0c0e 70%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  display: grid;
+  place-items: center;
+}
+
+.platter-spindle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #e7e9ec;
+  z-index: 0; /* below a docked record */
+}
+
+.platter-play-pause {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  color: #f4f1ea;
+  background: rgba(42, 45, 52, 0.85);
+  border: 2px solid #f4f1ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: auto;
+  user-select: none;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.platter-play-pause:hover {
+  background: rgba(42, 45, 52, 0.95);
+  border-color: #fff;
+}
+
+/* Tonearm */
+.tonearm {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  width: 56px;
+  height: 56px;
   transform-origin: top right;
 }
-
 .tonearm-base {
   position: absolute;
   top: 0;
   right: 0;
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #c9ccd2;
   box-shadow: inset 0 0 0 3px #8a8d93;
 }
-
 .tonearm-rod {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 56px;
-  height: 4px;
+  top: 6px;
+  right: 6px;
+  width: 46px;
+  height: 3px;
   background: linear-gradient(90deg, #d7dade, #a4a7ad);
   border-radius: 2px;
   transform-origin: right center;
-  transform: rotate(48deg);
 }
-
 .tonearm-head {
   position: absolute;
-  top: 44px;
-  left: 6px;
-  width: 12px;
-  height: 8px;
+  top: 3px;
+  left: -8px;
+  width: 10px;
+  height: 7px;
   background: #2a2d34;
   border: 1px solid #c9ccd2;
   border-radius: 2px;
 }
 
-.record-caption {
-  margin-top: 14px;
+/* Caption / now-playing - appears below body in white border */
+.turntable-caption {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
+  gap: 2px;
+  text-align: center;
+  width: 158px; /* Match body's outer width (150px + 4px border on each side) */
+  padding: 18px 8px 8px 8px; /* Extra padding at top to extend up */
+  background: #f4f1ea; /* Light background extends to border edge */
+  border-radius: 0 0 18px 18px;
+  margin-top: -18px; /* Overlap with body to hide gap */
+  overflow: hidden;
 }
 
-/* Little equalizer bars next to the caption. */
-.record-eq {
+.np-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #202121; /* Dark text for readability on light background */
+  max-width: 150px;
+}
+.np-link {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #0066cc; /* Darker, more accessible blue */
+  text-decoration: none;
+}
+.np-link:hover {
+  text-decoration: underline;
+  color: #004999; /* Even darker on hover */
+}
+.np-eq {
   display: inline-flex;
   align-items: flex-end;
   gap: 2px;
-  height: 12px;
+  height: 11px;
 }
-.record-eq i {
+.np-eq i {
   width: 3px;
   height: 4px;
   background: var(--coral);
   border-radius: 1px;
-}
-.record-player.is-playing .record-eq i {
   animation: eq 0.8s ease-in-out infinite;
 }
-.record-player.is-playing .record-eq i:nth-child(2) {
-  animation-delay: 0.15s;
-}
-.record-player.is-playing .record-eq i:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.record-player.is-playing .record-eq i:nth-child(4) {
-  animation-delay: 0.45s;
-}
+.np-eq i:nth-child(2) { animation-delay: 0.15s; }
+.np-eq i:nth-child(3) { animation-delay: 0.3s; }
+.np-eq i:nth-child(4) { animation-delay: 0.45s; }
 
 @keyframes eq {
-  0%,
-  100% {
-    height: 4px;
-  }
-  50% {
-    height: 12px;
-  }
+  0%, 100% { height: 4px; }
+  50% { height: 11px; }
 }

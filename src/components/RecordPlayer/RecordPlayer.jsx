@@ -1,17 +1,75 @@
-import { motion } from 'framer-motion';
+import { useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
-import { useChimeLoop } from '../../hooks/useChimeLoop';
 import './RecordPlayer.css';
 
 /**
- * RecordPlayer — the interactive music sticker.
- *
- * Click the vinyl to play / pause a looping melody (synthesized in
- * useChimeLoop). The record spins while playing and the tonearm swings
- * onto the groove. Pure SVG art so it stays crisp at any scale.
+ * RecordPlayer — draggable turntable sticker.
+ * Reports position changes for docked record tracking.
  */
-export default function RecordPlayer({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef }) {
-  const { isPlaying, toggle } = useChimeLoop();
+export default function RecordPlayer({
+  x,
+  y,
+  rotate = 0,
+  z,
+  enterDelay,
+  bringToFront,
+  constraintsRef,
+  dockedSong,
+  platterRef,
+  playerRef,
+  onPlayerMove,
+  onPlayerHoverChange,
+  onPlayerDragChange,
+  onTogglePlayPause,
+  isPlaying
+}) {
+  // Report player position to parent
+  const reportPosition = () => {
+    if (!platterRef.current || !onPlayerMove) return;
+    const rect = platterRef.current.getBoundingClientRect();
+    onPlayerMove({
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom
+    });
+  };
+
+  // Report position continuously using requestAnimationFrame
+  useEffect(() => {
+    let rafId;
+    const loop = () => {
+      reportPosition();
+      rafId = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(rafId);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDrag = (event, info) => {
+    reportPosition();
+  };
+
+  const handleHoverStart = () => {
+    onPlayerHoverChange?.(true);
+  };
+
+  const handleHoverEnd = () => {
+    onPlayerHoverChange?.(false);
+  };
+
+  const handleDragStart = () => {
+    reportPosition();
+    onPlayerDragChange?.(true);
+  };
+
+  const handleDragEnd = () => {
+    reportPosition();
+    onPlayerDragChange?.(false);
+    // Reset hover state since drag end may leave mouse outside element
+    onPlayerHoverChange?.(false);
+  };
 
   return (
     <Sticker
@@ -22,77 +80,22 @@ export default function RecordPlayer({ x, y, rotate, z, enterDelay, bringToFront
       enterDelay={enterDelay}
       bringToFront={bringToFront}
       constraintsRef={constraintsRef}
-      className="record-shell"
-      label={isPlaying ? 'Pause the record' : 'Play the record'}
-      interactive
-      onClick={toggle}
+      className="record-player-shell"
+      label="Record player"
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
     >
-      <div className={`record-player ${isPlaying ? 'is-playing' : ''}`}>
-        <div className="record-plate">
-          {/* Spinning vinyl */}
-          <motion.svg
-            className="record-vinyl"
-            viewBox="0 0 200 200"
-            width="170"
-            height="170"
-            animate={{ rotate: isPlaying ? 360 : 0 }}
-            transition={
-              isPlaying
-                ? { duration: 2.4, repeat: Infinity, ease: 'linear' }
-                : { duration: 0.6, ease: 'easeOut' }
-            }
-          >
-            <circle cx="100" cy="100" r="98" fill="#0d0d10" />
-            <circle cx="100" cy="100" r="98" fill="none" stroke="#26262c" strokeWidth="1" />
-            {/* Grooves */}
-            {[86, 74, 62, 50, 40].map((r) => (
-              <circle
-                key={r}
-                cx="100"
-                cy="100"
-                r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth="1.5"
-              />
-            ))}
-            {/* Light glint sweeping across the disc */}
-            <path
-              d="M100 4 A96 96 0 0 1 196 100 L100 100 Z"
-              fill="rgba(255,255,255,0.04)"
-            />
-            {/* Label */}
-            <circle cx="100" cy="100" r="34" fill="var(--coral)" />
-            <circle cx="100" cy="100" r="34" fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="2" />
-            <text
-              x="100"
-              y="96"
-              textAnchor="middle"
-              fontFamily="'Archivo Black', sans-serif"
-              fontSize="13"
-              fill="#2a0f0c"
-              letterSpacing="0.5"
-            >
-              SIDE
-            </text>
-            <text
-              x="100"
-              y="114"
-              textAnchor="middle"
-              fontFamily="'Archivo Black', sans-serif"
-              fontSize="13"
-              fill="#2a0f0c"
-            >
-              A
-            </text>
-            {/* Spindle hole */}
-            <circle cx="100" cy="100" r="4" fill="#0d0d10" />
-          </motion.svg>
-
-          {/* Tonearm — swings in when playing */}
+      <div ref={playerRef} className="turntable">
+        <div className="turntable-body">
+          <div ref={platterRef} className="platter">
+            <span className="platter-spindle" />
+          </div>
           <motion.div
-            className="record-tonearm"
-            animate={{ rotate: isPlaying ? -22 : -42 }}
+            className="tonearm"
+            animate={{ rotate: dockedSong ? -20 : -42 }}
             transition={{ type: 'spring', stiffness: 120, damping: 14 }}
           >
             <span className="tonearm-base" />
@@ -101,12 +104,35 @@ export default function RecordPlayer({ x, y, rotate, z, enterDelay, bringToFront
           </motion.div>
         </div>
 
-        <div className="record-caption">
-          <span className="record-eq" aria-hidden="true">
-            <i /><i /><i /><i />
-          </span>
-          {isPlaying ? 'now playing' : 'tap to play'}
-        </div>
+        <AnimatePresence>
+          {dockedSong && (
+            <motion.div
+              className="turntable-caption"
+              initial={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
+              animate={{ clipPath: 'inset(0 0 0% 0)', opacity: 1 }}
+              exit={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+            >
+              <span className="np-row">
+                <span className="np-eq" aria-hidden="true">
+                  <i /><i /><i /><i />
+                </span>
+                {dockedSong.title}
+              </span>
+              {dockedSong.streamUrl && (
+                <a
+                  className="np-link"
+                  href={dockedSong.streamUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  listen on Spotify ↗
+                </a>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </Sticker>
   );

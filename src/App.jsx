@@ -1,99 +1,289 @@
 import { useRef, useState } from 'react';
+import { useMotionValue } from 'framer-motion';
 import StickyNote from './components/StickyNote/StickyNote';
 import RecordPlayer from './components/RecordPlayer/RecordPlayer';
-import DesignBadge from './components/DesignBadge/DesignBadge';
-import BookSticker from './components/BookSticker/BookSticker';
-import ConcertPoster, { PosterFace } from './components/ConcertPoster/ConcertPoster';
-import BlobSticker from './components/BlobSticker/BlobSticker';
+import RecordCrate, { Record, FrontLip } from './components/RecordCrate/RecordCrate';
+import BookStack from './components/BookStack/BookStack';
+import BookCovers from './components/BookCovers/BookCovers';
+import FaceSticker from './components/FaceSticker/FaceSticker';
+import XLink from './components/XLink/XLink';
 import ExpandedOverlay from './components/ExpandedOverlay/ExpandedOverlay';
+import { useTrackPreview } from './hooks/useTrackPreview';
+import songs from './data/songs';
+import { getMood } from './data/reactions';
 import './App.css';
 
-export default function App() {
-  const canvasRef = useRef(null);
-  const [posterOpen, setPosterOpen] = useState(false);
+// Set to true to re-enable the color sticky note stack in the bottom-right corner
+const ENABLE_NOTE_STACK = false;
 
-  // Shared "bring to front" counter so the last-touched sticker sits on top.
+const NOTES = [
+  { id: 'n1', variant: 'yellow',   small: false, x: '3.3%', y: '13.7%', rotate:  -2, defaultText: 'Hello, welcome to my sticker board :)' },
+  { id: 'n2', variant: 'lavender', small: true,  x: '81%', y: '78%', rotate: -5, defaultText: '' },
+  { id: 'n3', variant: 'blue',     small: true,  x: '81%', y: '78%', rotate:  3, defaultText: '' },
+  { id: 'n4', variant: 'pink',     small: true,  x: '81%', y: '78%', rotate: -2, defaultText: '' },
+  { id: 'n5', variant: 'green',    small: true,  x: '81%', y: '78%', rotate:  5, defaultText: '' },
+];
+
+export default function App() {
+  const padRef = useRef(null);
+  const platterRef = useRef(null);
+  const crateRef = useRef(null);
+  const playerRef = useRef(null);
+  const [booksOpen, setBooksOpen] = useState(false);
+
+  const [currentMood, setCurrentMood] = useState('neutral');
+
+  const handleNoteTextChange = (id, text) => {
+    if (id !== 'n1') return;
+    setCurrentMood(getMood(text));
+  };
+
+  // Track bin and player positions
+  const binPosition = useRef(null);
+  const playerPosition = useRef(null);
+  const [binZIndex, setBinZIndex] = useState(2);
+  const [playerIsHovering, setPlayerIsHovering] = useState(false);
+  const [playerIsDragging, setPlayerIsDragging] = useState(false);
+
+  // Bin motion values for synchronous updates
+  const binMotionX = useMotionValue(0);
+  const binMotionY = useMotionValue(0);
+  // Plain MotionValue — scale is read from the sticker's actual CSS transform each frame
+  const binScaleMotion = useMotionValue(1);
+
+  // Calculate player scale based on state
+  const playerScale = playerIsDragging ? 1.07 : playerIsHovering ? 1.04 : 1;
+
+  // Music state
+  const { currentId, play, stop, togglePlayPause, isPlaying } = useTrackPreview();
+  const [dockedId, setDockedId] = useState(null);
+  const recordApis = useRef({});
+  const recordMotionValues = useRef({});
+
+  const dockedSong = songs.find((s) => s.id === dockedId) || null;
+
+  // Shared "bring to front" counter
   const topZ = useRef(20);
   const bringToFront = () => {
     topZ.current += 1;
     return topZ.current;
   };
 
-  // Staggered entrance: each sticker drops in slightly after the previous.
+  // Special bring to front for bin - also updates state so records/lip follow
+  const bringBinToFront = () => {
+    const newZ = bringToFront();
+    setBinZIndex(newZ);
+    return newZ;
+  };
+
   const delay = (i) => 0.15 + i * 0.09;
 
+  // Record management
+  const register = (id, api) => {
+    recordApis.current[id] = api;
+    return () => { delete recordApis.current[id]; };
+  };
+
+  const registerRecordMotion = (id, x, y, elementRef) => {
+    recordMotionValues.current[id] = { x, y, elementRef };
+  };
+
+  const dockRecord = (song) => {
+    if (dockedId && dockedId !== song.id) {
+      recordApis.current[dockedId]?.goHome();
+    }
+    setDockedId(song.id);
+    play(song);
+  };
+
+  const releaseDock = (songId) => {
+    if (dockedId === songId) {
+      setDockedId(null);
+      stop();
+    }
+  };
+
+  const isOverPlatter = (recordEl) => {
+    const platter = platterRef.current;
+    if (!platter || !recordEl) return false;
+    const p = platter.getBoundingClientRect();
+    const r = recordEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const slack = 36;
+    return cx > p.left - slack && cx < p.right + slack && cy > p.top - slack && cy < p.bottom + slack;
+  };
+
+  const isOverCrate = (recordEl) => {
+    const crate = crateRef.current;
+    if (!crate || !recordEl) return false;
+    const c = crate.getBoundingClientRect();
+    const r = recordEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const slack = 20;
+    return cx > c.left - slack && cx < c.right + slack && cy > c.top - slack && cy < c.bottom + slack;
+  };
+
+  // Position getters for records
+  const getBinPosition = () => binPosition.current;
+  const getPlayerPosition = () => playerPosition.current;
+
+  // Position updaters
+  const handleBinMove = (pos) => {
+    binPosition.current = pos;
+  };
+
+  const handlePlayerMove = (pos) => {
+    playerPosition.current = pos;
+  };
+
+  const handleBinHoverChange = () => {};
+  const handleBinDragChange = () => {};
+
+  // State updaters for player hover/drag
+  const handlePlayerHoverChange = (isHovering) => {
+    setPlayerIsHovering(isHovering);
+  };
+
+  const handlePlayerDragChange = (isDragging) => {
+    setPlayerIsDragging(isDragging);
+  };
+
   return (
-    <main className="canvas" ref={canvasRef}>
-      <div className="canvas-intro">
-        <h1>The Sticker Desk</h1>
-        <p>
-          A little corner of my world. Drag things around, spin the record,
-          flip through the book, and leave yourself a note.
-        </p>
+    <main className="wall">
+      <div className="pad" ref={padRef}>
+        <span className="pad-screw pad-screw--left" aria-hidden="true" />
+        <span className="pad-screw pad-screw--right" aria-hidden="true" />
+
+        <div className="pad-intro">
+          <h1>The Sticker Board</h1>
+        </div>
+
+        <RecordPlayer
+          x="75.9%"
+          y="65.1%"
+          rotate={0}
+          z={1}
+          enterDelay={delay(0)}
+          bringToFront={bringToFront}
+          constraintsRef={padRef}
+          dockedSong={dockedSong}
+          platterRef={platterRef}
+          playerRef={playerRef}
+          onPlayerMove={handlePlayerMove}
+          onPlayerHoverChange={handlePlayerHoverChange}
+          onPlayerDragChange={handlePlayerDragChange}
+          onTogglePlayPause={togglePlayPause}
+          isPlaying={isPlaying()}
+        />
+
+        <RecordCrate
+          x="65.9%"
+          y="calc(64.0% + 64px)"
+          rotate={2}
+          z={2}
+          enterDelay={delay(0)}
+          bringToFront={bringBinToFront}
+          constraintsRef={padRef}
+          dockedId={dockedId}
+          isOverPlatter={isOverPlatter}
+          isOverCrate={isOverCrate}
+          onDock={dockRecord}
+          onRelease={releaseDock}
+          register={register}
+          registerRecordMotion={registerRecordMotion}
+          platterRef={platterRef}
+          crateRef={crateRef}
+          getBinPosition={getBinPosition}
+          onBinMove={handleBinMove}
+          onBinHoverChange={handleBinHoverChange}
+          onBinDragChange={handleBinDragChange}
+          binMotionX={binMotionX}
+          binMotionY={binMotionY}
+          binScaleMotion={binScaleMotion}
+        />
+
+        {/* Records render at pad level */}
+        {songs.map((song, i) => (
+          <Record
+            key={song.id}
+            song={song}
+            slot={i}
+            docked={dockedId === song.id}
+            constraintsRef={padRef}
+            bringToFront={bringToFront}
+            isOverPlatter={isOverPlatter}
+            isOverCrate={isOverCrate}
+            onDock={dockRecord}
+            onRelease={releaseDock}
+            register={register}
+            registerMotion={registerRecordMotion}
+            platterRef={platterRef}
+            getBinPosition={getBinPosition}
+            getPlayerPosition={getPlayerPosition}
+            binZIndex={binZIndex}
+            binScaleMotion={binScaleMotion}
+            binMotionX={binMotionX}
+            binMotionY={binMotionY}
+            playerScale={playerScale}
+          />
+        ))}
+
+        {/* Front lip of bin renders above records */}
+        <FrontLip getBinPosition={getBinPosition} binZIndex={binZIndex} binScaleMotion={binScaleMotion} binMotionX={binMotionX} binMotionY={binMotionY} />
+
+        <BookStack
+          x="13.7%"
+          y="65.0%"
+          rotate={3}
+          enterDelay={delay(1)}
+          bringToFront={bringToFront}
+          constraintsRef={padRef}
+          onExpand={() => setBooksOpen(true)}
+        />
+
+        {NOTES.filter((note) => note.id === 'n1' || ENABLE_NOTE_STACK).map((note, i) => (
+          <StickyNote
+            key={note.id}
+            id={note.id}
+            variant={note.variant}
+            small={note.small}
+            defaultText={note.defaultText}
+            x={note.x}
+            y={note.y}
+            rotate={note.rotate}
+            enterDelay={delay(2) + i * 0.06}
+            bringToFront={bringToFront}
+            constraintsRef={padRef}
+            onTextChange={handleNoteTextChange}
+          />
+        ))}
+
+        <FaceSticker
+          x="33.9%"
+          y="23.1%"
+          rotate={-2}
+          enterDelay={delay(3)}
+          bringToFront={bringToFront}
+          constraintsRef={padRef}
+          mood={currentMood}
+        />
+
+        <XLink
+          x="86.0%"
+          y="12.6%"
+          rotate={5}
+          enterDelay={delay(4)}
+          bringToFront={bringToFront}
+          constraintsRef={padRef}
+        />
+
+        <p className="pad-hint">drag · click · edit · play</p>
       </div>
 
-      {/* Each sticker carries its own entrance delay so they drop in staggered,
-          then settle into drift/rest motion. */}
-      <ConcertPoster
-        x="42%"
-        y="9%"
-        rotate={-3}
-        enterDelay={delay(0)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-        onExpand={() => setPosterOpen(true)}
-      />
-
-      <RecordPlayer
-        x="9%"
-        y="20%"
-        rotate={-4}
-        enterDelay={delay(1)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-      />
-
-      <DesignBadge
-        x="74%"
-        y="16%"
-        rotate={6}
-        enterDelay={delay(2)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-      />
-
-      <BookSticker
-        x="13%"
-        y="62%"
-        rotate={3}
-        enterDelay={delay(3)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-      />
-
-      <StickyNote
-        x="60%"
-        y="58%"
-        rotate={4}
-        enterDelay={delay(4)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-      />
-
-      <BlobSticker
-        x="80%"
-        y="64%"
-        rotate={-5}
-        enterDelay={delay(5)}
-        bringToFront={bringToFront}
-        constraintsRef={canvasRef}
-      />
-
-      <p className="canvas-hint">drag · click · edit · play</p>
-
-      {/* Focused view for the concert poster. */}
-      <ExpandedOverlay open={posterOpen} onClose={() => setPosterOpen(false)}>
-        <PosterFace detailed />
+      <ExpandedOverlay open={booksOpen} onClose={() => setBooksOpen(false)}>
+        <BookCovers />
       </ExpandedOverlay>
     </main>
   );

@@ -1,53 +1,140 @@
-.canvas {
+/* ---- The wall: warm plaster/concrete surface the pad hangs on ---- */
+.wall {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  /* Soft radial vignette pulls focus to the center of the desk. */
+  display: grid;
+  place-items: center;
+  /* Eggshell plaster: a soft top-light wash over a warm off-white base. */
   background:
     radial-gradient(
-      circle at 50% 38%,
-      #1c2027 0%,
-      #14161b 42%,
-      var(--bg-deep) 100%
+      120% 90% at 50% 0%,
+      #f3ede2 0%,
+      #e8e0d2 48%,
+      #dcd3c2 100%
     );
 }
 
-/* Faint dotted "desk mat" grid for spatial grounding. */
-.canvas::before {
+/* Soft, broad plaster mottling for a gently uneven, hand-finished look.
+   (Stucco texture removed — may be replaced by a wall photo later.) */
+.wall::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.035) 1px,
-    transparent 1px
-  );
-  background-size: 28px 28px;
   pointer-events: none;
+  opacity: 0.3;
+  background-image:
+    radial-gradient(45% 35% at 22% 28%, rgba(255, 252, 246, 0.4), transparent 70%),
+    radial-gradient(40% 32% at 80% 70%, rgba(120, 105, 85, 0.18), transparent 70%);
 }
 
-/* Subtle film grain overlay — adds the analog, tactile quality. */
-.canvas::after {
+/* ---- The black pad: a board mounted slightly off the wall ---- */
+.pad {
+  position: relative;
+  width: 88vw;
+  height: 86vh;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 1;
+  /* Black board with a faint top-light so it reads as a physical surface. */
+  background:
+    radial-gradient(130% 100% at 50% 0%, #1a1c20 0%, #121316 55%, #0b0c0e 100%);
+  /* Mounted flat to the wall: a tight, close contact shadow — not floating. */
+  box-shadow:
+    0 4px 10px rgba(60, 50, 38, 0.28),
+    0 1px 3px rgba(60, 50, 38, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Subtle grain on the pad surface for tactility (no grid). */
+.pad::before {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.55;
-  mix-blend-mode: overlay;
   pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
-/* Quiet intro header, top-left, sits beneath the stickers. */
-.canvas-intro {
+/* Two screws bolting the pad into the wall at the top corners. */
+.pad-screw {
   position: absolute;
-  top: 38px;
-  left: 44px;
+  top: 18px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  z-index: 5;
+  pointer-events: none;
+  /* Brushed metal head with a top-lit highlight. */
+  background:
+    radial-gradient(circle at 38% 30%, #e7e9ec 0%, #b9bdc2 38%, #8d9298 70%, #6c7075 100%);
+  /* Recessed into the pad: dark ring below, faint lit edge above. */
+  box-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.55),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Phillips-head cross slot. */
+.pad-screw::before,
+.pad-screw::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: rgba(40, 42, 45, 0.7);
+  border-radius: 1px;
+}
+.pad-screw::before {
+  width: 10px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+.pad-screw::after {
+  width: 2px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+}
+
+.pad-screw--left {
+  left: 18px;
+}
+.pad-screw--right {
+  right: 18px;
+}
+
+/* Rotate each screw's cross slot by a different amount — screws never seat
+   perfectly aligned in real life. Both slots of one screw rotate together so
+   they stay perpendicular. */
+.pad-screw--left::before {
+  transform: translate(-50%, -50%) rotate(13deg);
+}
+.pad-screw--left::after {
+  transform: translate(-50%, -50%) rotate(13deg);
+}
+.pad-screw--right::before {
+  transform: translate(-50%, -50%) rotate(-8deg);
+}
+.pad-screw--right::after {
+  transform: translate(-50%, -50%) rotate(-8deg);
+}
+
+/* Title, top-left of the pad — vertically centered on the corner screws
+   (screw center ≈ 26px from top) and indented clear of the left screw. */
+.pad-intro {
+  position: absolute;
+  top: 18px;
+  left: 52px;
+  height: 16px; /* match the screw so center-alignment lines up */
+  display: flex;
+  align-items: center;
   z-index: 0;
-  max-width: 320px;
   pointer-events: none;
 }
 
-.canvas-intro h1 {
+.pad-intro h1 {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -55,17 +142,10 @@
   color: var(--ink-dim);
 }
 
-.canvas-intro p {
-  margin-top: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(167, 163, 155, 0.6);
-}
-
-/* Hint chip, bottom-center, gently fades. */
-.canvas-hint {
+/* Hint chip, bottom-center of the pad. */
+.pad-hint {
   position: absolute;
-  bottom: 28px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 0;

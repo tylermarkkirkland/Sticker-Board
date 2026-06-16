@@ -1,0 +1,128 @@
+.book-covers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 80px; /* Large spacing between title and covers */
+  padding: 8px;
+}
+
+.book-covers-title {
+  font-family: 'Caveat', cursive;
+  font-size: 30px;
+  color: var(--ink);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.book-covers-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* Each flip card. Fixed size; front = cover image, back = white note. */
+.cover-card {
+  --cw: 180px;
+  --ch: 250px;
+  width: var(--cw);
+  height: var(--ch);
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Perspective wrapper — NOT animated by Framer Motion, so the 3D context
+   survives the card's fan transform. */
+.cover-persp {
+  display: block;
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+  /* Shadow lives here, NOT on .cover-inner — a filter on the preserve-3d
+     element flattens its children and breaks backface-visibility. */
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.45));
+}
+
+.cover-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.cover-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.cover-face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cover-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* White back side with rating + quote. */
+.cover-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(160deg, #fffdf8 0%, #f3eee2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 18px;
+  text-align: center;
+  color: #2b2620;
+}
+
+.cover-back-title {
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #3a332a;
+}
+
+.cover-stars {
+  display: flex;
+  gap: 2px;
+  font-size: 18px;
+}
+.cover-stars .star {
+  color: #d8cfb8;
+}
+.cover-stars .star.on {
+  color: #e0a428;
+}
+
+.cover-quote {
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  line-height: 1.25;
+  color: #5a4a2a;
+}
+
+.cover-flip-hint {
+  margin-top: 2px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(90, 74, 42, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-inner {
+    transition-duration: 0.001ms;
+  }
+}

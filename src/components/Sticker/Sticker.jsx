@@ -5,8 +5,13 @@ import './Sticker.css';
 /**
  * Sticker — the tactile, draggable wrapper every object on the board uses.
  *
- * Handles: freeform placement, drag within the canvas, hover lift,
- * bring-to-front on interaction, a resting tilt, and optional gentle drift.
+ * Two layers, on purpose:
+ *  - outer layer owns POSITION: drag, placement, lift-on-grab, stacking.
+ *    Drag has no momentum and no elastic, so a piece stays exactly where
+ *    you drop it and stops hard at the canvas edge.
+ *  - inner layer owns DECORATION: the entrance, the resting tilt, and the
+ *    optional ambient bob. Keeping the bob here means it never fights the
+ *    drag, and a floating sticker keeps bobbing around its new drop spot.
  *
  * Props:
  *  - x, y           starting position (any CSS length, e.g. "20%" or 120)
@@ -19,6 +24,7 @@ import './Sticker.css';
  *  - className      extra class for the inner shell
  *  - label          accessible label / title
  *  - interactive    if true, renders as a button-like focusable element
+ *  - enterDelay     stagger for the entrance animation
  */
 export default function Sticker({
   x,
@@ -29,10 +35,19 @@ export default function Sticker({
   drift,
   constraintsRef,
   onClick,
+  onDoubleClick,
+  onDragStart,
+  onDrag,
+  onDragEnd,
+  onHoverStart,
+  onHoverEnd,
+  disableHoverScale = false,
   className = '',
   label,
   interactive = false,
   enterDelay = 0,
+  motionX,
+  motionY,
   children,
 }) {
   const [zIndex, setZIndex] = useState(z);
@@ -42,19 +57,8 @@ export default function Sticker({
     if (bringToFront) setZIndex(bringToFront());
   };
 
-  // Ambient drift only when not being touched, and only if requested.
-  // Always settle opacity/scale so the entrance fade-in resolves.
-  const driftAnimation = drift
-    ? {
-        y: [0, drift.y ?? -8, 0],
-        rotate: [rotate, rotate + (drift.rotate ?? 1.5), rotate],
-        opacity: 1,
-        scale: 1,
-      }
-    : { y: 0, rotate, opacity: 1, scale: 1 };
-
   const handleClick = (e) => {
-    // Suppress click that's really the tail end of a drag.
+    // Suppress the click that's really the tail end of a drag.
     if (isDragging) return;
     onClick?.(e);
   };
@@ -67,48 +71,74 @@ export default function Sticker({
     }
   };
 
+  // Inner layer: entrance settles once, then either loops a gentle bob
+  // (drift) or rests at the base tilt.
+  const driftAnimation = drift
+    ? {
+        y: [0, drift.y ?? -8, 0],
+        rotate: [rotate, rotate + (drift.rotate ?? 1.5), rotate],
+        opacity: 1,
+        scale: 1,
+      }
+    : { y: 0, rotate, opacity: 1, scale: 1 };
+
+  const dragStyle = {
+    left: x,
+    top: y,
+    zIndex,
+    ...(motionX && motionY ? { x: motionX, y: motionY } : {})
+  };
+
   return (
     <motion.div
-      className={`sticker ${className}`}
-      style={{ left: x, top: y, zIndex }}
+      className={`sticker ${isDragging ? 'is-lifted' : ''}`}
+      style={dragStyle}
       drag
       dragConstraints={constraintsRef}
-      dragElastic={0.12}
-      dragMomentum={true}
-      dragTransition={{ bounceStiffness: 260, bounceDamping: 22 }}
-      onDragStart={() => {
+      dragElastic={0}
+      dragMomentum={false}
+      onDragStart={(event, info) => {
         setIsDragging(true);
         lift();
+        onDragStart?.(event, info);
       }}
-      onDragEnd={() => {
-        // Defer so the synthetic click after drag is swallowed.
+      onDrag={onDrag}
+      onDragEnd={(event, info) => {
+        // Defer so the synthetic click after a drag is swallowed.
         setTimeout(() => setIsDragging(false), 0);
+        onDragEnd?.(event, info);
       }}
       onPointerDown={lift}
-      initial={{ opacity: 0, scale: 0.9, y: 26 }}
-      animate={driftAnimation}
-      transition={{
-        // Entrance settles once...
-        opacity: { delay: enterDelay, duration: 0.4 },
-        scale: { delay: enterDelay, type: 'spring', stiffness: 220, damping: 18 },
-        // ...then drift loops (or springs to rest if no drift).
-        y: drift
-          ? { delay: enterDelay, duration: drift.duration ?? 7, repeat: Infinity, ease: 'easeInOut' }
-          : { delay: enterDelay, type: 'spring', stiffness: 220, damping: 20 },
-        rotate: drift
-          ? { delay: enterDelay, duration: drift.duration ?? 7, repeat: Infinity, ease: 'easeInOut' }
-          : { delay: enterDelay, type: 'spring', stiffness: 220, damping: 20 },
-      }}
-      whileHover={{ scale: 1.04, rotate: rotate * 0.4 }}
-      whileTap={{ scale: 0.97 }}
-      whileDrag={{ scale: 1.06, cursor: 'grabbing' }}
+      onHoverStart={onHoverStart}
+      onHoverEnd={onHoverEnd}
+      // Lift on grab, hold it the whole drag, soft-settle on release.
+      whileHover={disableHoverScale ? {} : { scale: 1.04 }}
+      whileDrag={{ scale: 1.07 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 26 }}
       onClick={handleClick}
+      onDoubleClick={onDoubleClick}
       onKeyDown={handleKeyDown}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-label={label}
     >
-      {children}
+      <motion.div
+        className={`sticker-inner ${className}`}
+        initial={{ opacity: 0, scale: 0.9, y: 26 }}
+        animate={driftAnimation}
+        transition={{
+          opacity: { delay: enterDelay, duration: 0.4 },
+          scale: { delay: enterDelay, type: 'spring', stiffness: 220, damping: 18 },
+          y: drift
+            ? { delay: enterDelay, duration: drift.duration ?? 7, repeat: Infinity, ease: 'easeInOut' }
+            : { delay: enterDelay, type: 'spring', stiffness: 220, damping: 20 },
+          rotate: drift
+            ? { delay: enterDelay, duration: drift.duration ?? 7, repeat: Infinity, ease: 'easeInOut' }
+            : { delay: enterDelay, type: 'spring', stiffness: 220, damping: 20 },
+        }}
+      >
+        {children}
+      </motion.div>
     </motion.div>
   );
 }

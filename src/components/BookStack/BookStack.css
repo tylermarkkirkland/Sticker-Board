@@ -1,0 +1,41 @@
+.book-stack {
+  position: relative;
+  /* The static image establishes the box height via its natural ratio. */
+  display: grid;
+  place-items: center;
+}
+
+.book-stack-img {
+  grid-area: 1 / 1; /* stack both images in the same cell */
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+/* Static stack visible by default. */
+.book-stack-img--static {
+  opacity: 1;
+}
+
+/* Lifted/separated art is wider+taller; center it on the same point and let it
+   overflow the box so the books appear to spread apart. Hidden until hover. */
+.book-stack-img--hover {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Render the lifted/separated art a bit smaller than the static box so the
+     hover state reads as compact. Centered on the same point so the books
+     spread in place. */
+  width: 92%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.book-stack-shell:hover .book-stack-img--static {
+  opacity: 0;
+}
+.book-stack-shell:hover .book-stack-img--hover {
+  opacity: 1;
+}
