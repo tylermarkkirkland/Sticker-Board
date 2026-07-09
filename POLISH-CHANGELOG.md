@@ -42,7 +42,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Files:** `src/components/MusicCorner/*` (deleted), `package.json`,
   `package-lock.json`.
 - **Verified:** `npm run build` succeeds; no source imports any removed module.
-- **Revert:** `git revert <commit-1>` (restores files + deps).
+- **Revert:** `git revert c3fc9de` (restores files + deps).
 
 ### 2. Remove orphaned / inert code (no behavior change)
 - **What:**
@@ -63,7 +63,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   `src/components/RecordPlayer/RecordPlayer.css`.
 - **Note:** `useTrackPreview` still exports those methods — the hook is untouched,
   so re-wiring later is trivial.
-- **Revert:** `git revert <commit-2>`.
+- **Revert:** `git revert 37df195`.
 
 ### 3. Honor prefers-reduced-motion for the JS entrance animation
 - **What:** In `src/components/Sticker/Sticker.jsx`, used Framer's
@@ -75,7 +75,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   animations (record spin, EQ bars), but Framer's JS-driven entrance ran
   regardless. This closes that gap.
 - **Files:** `src/components/Sticker/Sticker.jsx`.
-- **Revert:** `git revert <commit-3>`.
+- **Revert:** `git revert 149c284`.
 
 ### 4. Add social cards, favicon, and unify the name (index.html)
 - **What:** Added Open Graph + Twitter Card meta, `theme-color`, and an SVG
@@ -87,7 +87,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **⚠ Action needed after deploy:** the `og:url`/`og:image`/`twitter:image` URLs
   use a placeholder domain `https://sticker-desk.vercel.app/`. Update them to the
   real domain so the card resolves.
-- **Revert:** `git revert <commit-4>`.
+- **Revert:** `git revert 2258c10`.
 
 ### 5. Make book back-face placeholders intentional
 - **What:** `src/components/BookCovers/BookCovers.jsx` — the aria-label and code
@@ -97,14 +97,14 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Why:** Removes a broken promise to screen readers and the "placeholder" smell
   without inventing fake rating data.
 - **Files:** `src/components/BookCovers/BookCovers.jsx`.
-- **Revert:** `git revert <commit-5>`.
+- **Revert:** `git revert b861077`.
 
 ### 6. Rewrite README + add deploy docs
 - **What:** Replaced the out-of-date README (which described a concert poster,
   design badge, blob character, and a nonexistent `useChimeLoop.js`) with an
   accurate description of the real desk, plus a Deploy section.
 - **Files:** `README.md`.
-- **Revert:** `git revert <commit-6>`.
+- **Revert:** `git revert df1bcfa`.
 
 ### 7. Optimize heavy assets (own commit — highest fidelity risk)
 - **What:**
@@ -130,7 +130,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Fidelity note:** AAC at 192 kbps is perceptually transparent for a looped
   music preview, and the image downscale is invisible at display size. **Please
   spot-check audio playback in a normal browser** (the headless preview can't
-  autoplay); if anything sounds off, `git revert <commit-7>` restores the WAVs
+  autoplay); if anything sounds off, `git revert b10f80d` restores the WAVs
   and full-size PNGs.
-- **Revert:** `git revert <commit-7>` (or restore originals from baseline
+- **Revert:** `git revert b10f80d` (or restore originals from baseline
   `e4ab766`).
