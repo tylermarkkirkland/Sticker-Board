@@ -105,3 +105,32 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   accurate description of the real desk, plus a Deploy section.
 - **Files:** `README.md`.
 - **Revert:** `git revert <commit-6>`.
+
+### 7. Optimize heavy assets (own commit — highest fidelity risk)
+- **What:**
+  - **Audio:** converted the three uncompressed WAVs (~77 MB total; one was
+    39 MB) to 192 kbps AAC `.m4a` (~9.7 MB total) with `afconvert`. Durations
+    match the originals exactly (176.7s / 31.4s / 214.9s), so the preview
+    windows in `src/data/songs.js` are unaffected. Updated `songs.js` `file`
+    fields to `.m4a`. Moved the WAV originals out of the served folder into
+    `audio-source/` (still in the repo) so they no longer ship in `dist`.
+  - **Images:** downscaled oversized PNGs to ~2.7× their on-screen size (faces
+    918→640px wide; book-stack 940→620px; book-stack-hover 1050→700px). At the
+    real render size (~237px) they are pixel-indistinguishable; the group
+    dropped 7.5 MB → 3.4 MB.
+  - Net: `public/` 89 MB → 18 MB; production `dist/` ≈ 20 MB, with an initial
+    paint of ~1 MB (face + book stack). Audio loads only when a record docks.
+- **Why:** 77 MB of WAV made this far too heavy to feel like a "microsite" or to
+  load quickly for anyone opening a shared link.
+- **Verified:** `npm run build` succeeds; all three `.m4a` decode in-browser via
+  an `Audio` element with correct durations; on-screen screenshot is unchanged.
+- **Files:** `src/data/songs.js`, `public/audio/*.m4a` (new),
+  `public/face*.png`, `public/book-stack*.png` (resized), WAVs moved to
+  `audio-source/`.
+- **Fidelity note:** AAC at 192 kbps is perceptually transparent for a looped
+  music preview, and the image downscale is invisible at display size. **Please
+  spot-check audio playback in a normal browser** (the headless preview can't
+  autoplay); if anything sounds off, `git revert <commit-7>` restores the WAVs
+  and full-size PNGs.
+- **Revert:** `git revert <commit-7>` (or restore originals from baseline
+  `e4ab766`).
