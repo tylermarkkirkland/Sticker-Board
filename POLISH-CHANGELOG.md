@@ -64,3 +64,44 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Note:** `useTrackPreview` still exports those methods — the hook is untouched,
   so re-wiring later is trivial.
 - **Revert:** `git revert <commit-2>`.
+
+### 3. Honor prefers-reduced-motion for the JS entrance animation
+- **What:** In `src/components/Sticker/Sticker.jsx`, used Framer's
+  `useReducedMotion()` to drop the entrance slide/scale (pieces just fade in) and
+  disable the ambient `drift` bob loop when reduced motion is requested. All
+  interaction feedback (drag lift, hover scale, dock/tonearm springs) is kept —
+  it's user-initiated.
+- **Why:** The global CSS `prefers-reduced-motion` block already neutralizes CSS
+  animations (record spin, EQ bars), but Framer's JS-driven entrance ran
+  regardless. This closes that gap.
+- **Files:** `src/components/Sticker/Sticker.jsx`.
+- **Revert:** `git revert <commit-3>`.
+
+### 4. Add social cards, favicon, and unify the name (index.html)
+- **What:** Added Open Graph + Twitter Card meta, `theme-color`, and an SVG
+  favicon (`public/favicon.svg`); unified the tab title to "The Sticker Desk".
+  Added a generated 1200×630 `public/og-image.png` for the link preview.
+- **Why:** Pasting the link into X/Slack now yields a titled card with a preview
+  image instead of a bare link.
+- **Files:** `index.html`, `public/favicon.svg`, `public/og-image.png`.
+- **⚠ Action needed after deploy:** the `og:url`/`og:image`/`twitter:image` URLs
+  use a placeholder domain `https://sticker-desk.vercel.app/`. Update them to the
+  real domain so the card resolves.
+- **Revert:** `git revert <commit-4>`.
+
+### 5. Make book back-face placeholders intentional
+- **What:** `src/components/BookCovers/BookCovers.jsx` — the aria-label and code
+  comments promised a "rating" that was never rendered. Realigned the label to
+  "read a favorite quote / see the cover" and fixed the comments to describe the
+  actual back face (tags + quote). Sample quotes/tags kept as-is.
+- **Why:** Removes a broken promise to screen readers and the "placeholder" smell
+  without inventing fake rating data.
+- **Files:** `src/components/BookCovers/BookCovers.jsx`.
+- **Revert:** `git revert <commit-5>`.
+
+### 6. Rewrite README + add deploy docs
+- **What:** Replaced the out-of-date README (which described a concert poster,
+  design badge, blob character, and a nonexistent `useChimeLoop.js`) with an
+  accurate description of the real desk, plus a Deploy section.
+- **Files:** `README.md`.
+- **Revert:** `git revert <commit-6>`.
