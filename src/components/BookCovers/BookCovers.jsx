@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import './BookCovers.css';
 
-// Per-book data. Star ratings + quotes are placeholders — swap in the real
-// ones anytime. cover = the sliced front-cover PNG in public/.
+// Per-book data. Tags + quotes are sample picks — swap in your real ones
+// anytime. cover = the sliced front-cover PNG in public/.
 const BOOKS = [
   {
     title: 'Red Rising',
@@ -55,7 +55,7 @@ function Tags({ tags }) {
 
 /**
  * BookCovers — the expanded view. Four covers fan out; clicking a cover flips
- * it to a white back showing the star rating + a quote.
+ * it to a back showing its tags and a favorite quote.
  */
 export default function BookCovers() {
   const [flipped, setFlipped] = useState(() => BOOKS.map(() => false));
@@ -77,7 +77,7 @@ export default function BookCovers() {
             animate={{ opacity: 1, y: FAN[i].y, rotate: FAN[i].rotate }}
             transition={{ delay: 0.06 * i, type: 'spring', stiffness: 240, damping: 22 }}
             whileHover={{ y: FAN[i].y - 14, rotate: FAN[i].rotate * 0.5, zIndex: 5 }}
-            aria-label={`${book.title} by ${book.author}. Click to ${flipped[i] ? 'see cover' : 'see my rating'}.`}
+            aria-label={`${book.title} by ${book.author}. Click to ${flipped[i] ? 'see the cover' : 'read a favorite quote'}.`}
           >
             {/* Perspective lives here (not on the motion element, whose own
                 transform would otherwise consume it and flatten the flip). */}
