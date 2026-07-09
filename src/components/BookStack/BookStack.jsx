@@ -30,8 +30,10 @@ export default function BookStack({ x, y, rotate, z, enterDelay, bringToFront, c
       onClick={onExpand}
     >
       <div className="book-stack" style={{ width: STACK_W }}>
-        <img className="book-stack-img book-stack-img--static" src={STACK} alt="" draggable="false" />
-        <img className="book-stack-img book-stack-img--hover" src={STACK_HOVER} alt="" draggable="false" />
+        <div className="book-stack-images">
+          <img className="book-stack-img book-stack-img--static" src={STACK} alt="" draggable="false" />
+          <img className="book-stack-img book-stack-img--hover" src={STACK_HOVER} alt="" draggable="false" />
+        </div>
       </div>
     </Sticker>
   );

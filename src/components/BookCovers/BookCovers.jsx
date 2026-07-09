@@ -9,28 +9,28 @@ const BOOKS = [
     title: 'Red Rising',
     author: 'Pierce Brown',
     cover: '/book-cover-1.png',
-    stars: 5,
+    tags: ['Brutal', 'Sci-fi', 'Quick Paced'],
     quote: 'I would have lived in peace. But my enemies brought me war.',
   },
   {
     title: 'The Way of Kings',
     author: 'Brandon Sanderson',
     cover: '/book-cover-2.png',
-    stars: 5,
+    tags: ['Epic Fantasy', 'Inspiring', 'War'],
     quote: 'Life before death, strength before weakness, journey before destination.',
   },
   {
     title: 'The Sword of Kaigen',
     author: 'M. L. Wang',
     cover: '/book-cover-3.png',
-    stars: 5,
+    tags: ['Heartbreaking', 'Feudal Japan', 'Magic'],
     quote: 'A warrior may scheme, lie, and break, but a real one always gets back up.',
   },
   {
     title: 'Mistborn',
     author: 'Brandon Sanderson',
     cover: '/book-cover-4.png',
-    stars: 4,
+    tags: ['Heist', 'Inventive', 'Clever'],
     quote: "There's always another secret.",
   },
 ];
@@ -43,13 +43,11 @@ const FAN = [
   { rotate: 8, y: 10 },
 ];
 
-function Stars({ n }) {
+function Tags({ tags }) {
   return (
-    <div className="cover-stars" aria-label={`${n} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= n ? 'star on' : 'star'}>
-          ★
-        </span>
+    <div className="cover-tags" aria-label={`Tags: ${tags.join(', ')}`}>
+      {tags.map((tag) => (
+        <span key={tag} className="cover-tag">{tag}</span>
       ))}
     </div>
   );
@@ -90,7 +88,7 @@ export default function BookCovers() {
                 </span>
                 <span className="cover-face cover-back">
                   <span className="cover-back-title">{book.title}</span>
-                  <Stars n={book.stars} />
+                  <Tags tags={book.tags} />
                   <span className="cover-quote">“{book.quote}”</span>
                   <span className="cover-flip-hint">click to flip back</span>
                 </span>

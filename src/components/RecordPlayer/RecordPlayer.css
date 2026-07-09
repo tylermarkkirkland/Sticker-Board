@@ -1,7 +1,7 @@
 .turntable {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: relative;
+  width: 150px;
+  height: 150px;
   will-change: transform;
 }
 
@@ -109,19 +109,25 @@
   border-radius: 2px;
 }
 
-/* Caption / now-playing - appears below body in white border */
+/* Caption / now-playing — absolutely positioned so it never affects the
+   turntable's layout height. The player sticker stays a fixed 150×150px
+   regardless of whether a record is docked. */
 .turntable-caption {
+  position: absolute;
+  top: 132px; /* 150px body height − 18px overlap */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   text-align: center;
-  width: 158px; /* Match body's outer width (150px + 4px border on each side) */
-  padding: 18px 8px 8px 8px; /* Extra padding at top to extend up */
-  background: #f4f1ea; /* Light background extends to border edge */
+  width: 158px;
+  padding: 18px 8px 8px 8px;
+  background: #f4f1ea;
   border-radius: 0 0 18px 18px;
-  margin-top: -18px; /* Overlap with body to hide gap */
   overflow: hidden;
+  z-index: -1; /* slides behind the body's bottom edge */
 }
 
 .np-row {

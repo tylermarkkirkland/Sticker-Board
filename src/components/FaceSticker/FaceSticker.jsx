@@ -2,8 +2,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import './FaceSticker.css';
 
-const FACE_W = 240;
-
 const faceImgs = {
   neutral: '/face.png',
   happy:   '/face-happy.png',
@@ -51,20 +49,23 @@ export default function FaceSticker({ x, y, rotate, z, enterDelay, bringToFront,
       className="face-shell"
       label="A sticker of me"
     >
-      <div className="face" style={{ width: FACE_W }}>
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={mood}
-            className="face-img"
-            src={faceImgs[mood] ?? faceImgs.neutral}
-            alt=""
-            draggable="false"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ duration: 0.08, ease: 'easeOut' }}
-          />
-        </AnimatePresence>
+      <div className="face">
+        {/* Clip wrapper trims the ~5px transparent edges and ~8px top pad from the PNG */}
+        <div className="face-img-clip">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={mood}
+              className="face-img"
+              src={faceImgs[mood] ?? faceImgs.neutral}
+              alt=""
+              draggable="false"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.08, ease: 'easeOut' }}
+            />
+          </AnimatePresence>
+        </div>
 
         <AnimatePresence>
           {text && (

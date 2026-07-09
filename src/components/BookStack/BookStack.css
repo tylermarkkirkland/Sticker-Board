@@ -1,8 +1,15 @@
 .book-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.book-stack-images {
   position: relative;
-  /* The static image establishes the box height via its natural ratio. */
   display: grid;
   place-items: center;
+  width: 100%;
 }
 
 .book-stack-img {

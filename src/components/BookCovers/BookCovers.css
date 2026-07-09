@@ -72,45 +72,63 @@
   display: block;
 }
 
-/* White back side with rating + quote. */
+/* White back side with tags + quote. */
 .cover-back {
   transform: rotateY(180deg);
   background: linear-gradient(160deg, #fffdf8 0%, #f3eee2 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 20px 18px;
+  justify-content: space-between;
+  padding: 20px 18px 14px;
   text-align: center;
   color: #2b2620;
 }
 
 .cover-back-title {
   font-family: 'Caveat', cursive;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.1;
   color: #3a332a;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cover-stars {
+.cover-tags {
   display: flex;
-  gap: 2px;
-  font-size: 18px;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  align-content: center;
+  min-height: 52px;
 }
-.cover-stars .star {
-  color: #d8cfb8;
-}
-.cover-stars .star.on {
-  color: #e0a428;
+
+.cover-tag {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a4a2a;
+  background: rgba(90, 74, 42, 0.1);
+  border: 1px solid rgba(90, 74, 42, 0.2);
+  border-radius: 99px;
+  padding: 3px 8px;
+  white-space: nowrap;
 }
 
 .cover-quote {
   font-family: 'Caveat', cursive;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.25;
   color: #5a4a2a;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .cover-flip-hint {

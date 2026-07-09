@@ -42,6 +42,7 @@ export default function Sticker({
   onHoverStart,
   onHoverEnd,
   disableHoverScale = false,
+  disableScale = false,
   className = '',
   label,
   interactive = false,
@@ -112,8 +113,8 @@ export default function Sticker({
       onHoverStart={onHoverStart}
       onHoverEnd={onHoverEnd}
       // Lift on grab, hold it the whole drag, soft-settle on release.
-      whileHover={disableHoverScale ? {} : { scale: 1.04 }}
-      whileDrag={{ scale: 1.07 }}
+      whileHover={(disableHoverScale || disableScale) ? {} : { scale: 1.04 }}
+      whileDrag={disableScale ? {} : { scale: 1.07 }}
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
       onClick={handleClick}
       onDoubleClick={onDoubleClick}

@@ -1,11 +1,21 @@
 .face {
   position: relative;
   user-select: none;
+  /* Width/height come from .face-img-clip so the hit area matches the visible art */
+}
+
+/* Crops the PNG's ~5px transparent side margins and ~8px top margin */
+.face-img-clip {
+  width: 230px;  /* 240px rendered - 5px left - 5px right */
+  height: 251px; /* 261px rendered - 8px top  - 2px bottom */
+  overflow: hidden;
 }
 
 .face-img {
   display: block;
-  width: 100%;
+  width: 240px;
+  margin-left: -5px; /* shift left so transparent left edge is clipped */
+  margin-top: -8px;  /* shift up  so transparent top  edge is clipped */
   height: auto;
   pointer-events: none;
 }

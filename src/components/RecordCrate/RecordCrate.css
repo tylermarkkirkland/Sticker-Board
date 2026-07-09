@@ -1,11 +1,9 @@
 .crate {
   position: relative;
   width: 128px;
-  /* Height matches crate-back exactly — no empty space above the visible wood. */
   height: 108px;
 }
 
-/* Back wall of the bin — normal block so crate height matches the visual. */
 .crate-back {
   width: 128px;
   height: 108px;
@@ -14,13 +12,26 @@
   box-shadow: 0 0 0 4px #f4f1ea;
 }
 
-/* Front lip of the bin — renders at pad level above records */
-.crate-front-floating {
+/* Front lip sits inside the Sticker, absolutely positioned at the bottom.
+   Both back wall and front lip share the same transform — no sync needed. */
+.crate-front {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 128px;
+  height: 54px;
   border-radius: 6px;
   background: linear-gradient(160deg, #6b4a2f 0%, #3c2819 100%);
   box-shadow:
     0 0 0 4px #f4f1ea,
     inset 0 5px 9px rgba(0, 0, 0, 0.4);
+}
+
+/* Clip the bottom of in-bin records so they appear to sit behind the front lip.
+   Negative insets on top/left/right preserve the 3px die-cut shadow on those edges.
+   Bottom value: 20px DOM overlap + 4px front lip box-shadow spread = 24px. */
+.record-floating.is-in-bin {
+  clip-path: inset(-4px -4px 24px -4px);
 }
 
 /* Records that float at pad level */
@@ -30,6 +41,7 @@
   will-change: transform;
 }
 .record-floating:active { cursor: grabbing; }
+
 
 .record-disc {
   position: relative;
@@ -69,8 +81,6 @@
   z-index: 1;
 }
 
-/* A docked record sits on the platter (above the front lip) and ignores the
-   crate's stacking — needs very high z-index to stay above player body. */
 .record-floating.is-docked {
   z-index: 100 !important;
 }

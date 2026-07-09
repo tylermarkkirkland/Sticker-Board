@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, frame } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import './RecordCrate.css';
 
-const SPRING = { type: 'spring', stiffness: 300, damping: 28 };
-
 /**
- * RecordCrate — bin that visually contains records.
+ * RecordCrate — back wall and front lip are both children of the same Sticker,
+ * so they share one transform and scale together perfectly on hover/drag.
  */
 export default function RecordCrate({
   x,
@@ -16,112 +15,62 @@ export default function RecordCrate({
   enterDelay,
   bringToFront,
   constraintsRef,
-  dockedId,
-  isOverPlatter,
-  isOverCrate,
-  onDock,
-  onRelease,
-  register,
-  registerRecordMotion,
-  platterRef,
   crateRef,
-  getBinPosition,
   onBinMove,
   onBinHoverChange,
-  onBinDragChange,
-  binMotionX,
-  binMotionY,
   binScaleMotion,
 }) {
   const internalCrateRef = useRef(null);
-  const internalMotionX = useMotionValue(0);
-  const internalMotionY = useMotionValue(0);
+  const isDraggingRef = useRef(false);
 
   const reportPosition = () => {
     if (!internalCrateRef.current || !onBinMove) return;
-    const rect = internalCrateRef.current.getBoundingClientRect();
-
-    // Use the outer .sticker element's center as the scale origin.
-    // The sticker scales via whileHover/whileDrag from transform-origin: 50% 50%,
-    // which equals (stickerRect.left + w/2, stickerRect.top + h/2) in viewport space.
-    // For rotation about center, the AABB center == the layout center, so this is exact.
+    // Use the sticker outer div (not scaled) for all position values.
+    // The .crate motion.div scales visually, but records must position from
+    // the un-scaled layout rect so they don't double-translate while scaling.
     const stickerEl = internalCrateRef.current.closest('.sticker');
-    const stickerRect = stickerEl ? stickerEl.getBoundingClientRect() : rect;
-    const cx = stickerRect.left + stickerRect.width / 2;
-    const cy = stickerRect.top + stickerRect.height / 2;
-
-    // Read the actual CSS scale applied to the outer sticker div this frame and
-    // mirror it to binScaleMotion so FrontLip and Records are always frame-exact.
-    if (stickerEl && binScaleMotion) {
-      const transform = window.getComputedStyle(stickerEl).transform;
-      if (transform && transform !== 'none') {
-        const m = new DOMMatrix(transform);
-        // For a pure scale (no rotation on the outer div): a==d==scale, b==c==0
-        binScaleMotion.set(Math.hypot(m.a, m.b));
-      } else {
-        binScaleMotion.set(1);
-      }
-    }
-
+    const sr = stickerEl
+      ? stickerEl.getBoundingClientRect()
+      : internalCrateRef.current.getBoundingClientRect();
     onBinMove({
-      left: rect.left,
-      top: rect.top,
-      right: rect.right,
-      bottom: rect.bottom,
-      width: rect.width,
-      height: rect.height,
-      cx,
-      cy,
+      left: sr.left,
+      top: sr.top,
+      right: sr.right,
+      bottom: sr.bottom,
+      width: sr.width,
+      height: sr.height,
+      cx: sr.left + sr.width / 2,
+      cy: sr.top + sr.height / 2,
     });
   };
 
-  // Report position after Framer Motion writes its transforms each frame.
-  // frame.postRender fires after FM finishes DOM writes, so getComputedStyle
-  // inside reportPosition() always reads the freshly-written scale value.
   useEffect(() => {
-    let running = true;
-    const tick = () => {
-      if (!running) return;
-      frame.postRender(() => {
-        reportPosition();
-        if (running) requestAnimationFrame(tick);
-      });
+    let rafId;
+    const loop = () => {
+      reportPosition();
+      rafId = requestAnimationFrame(loop);
     };
-    requestAnimationFrame(tick);
-    return () => { running = false; };
+    loop();
+    return () => cancelAnimationFrame(rafId);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync motion values
-  useEffect(() => {
-    const unsubX = internalMotionX.on('change', (v) => binMotionX?.set(v));
-    const unsubY = internalMotionY.on('change', (v) => binMotionY?.set(v));
-    return () => {
-      unsubX();
-      unsubY();
-    };
-  }, [binMotionX, binMotionY, internalMotionX, internalMotionY]);
-
-  const handleDrag = (event, info) => {
-    reportPosition();
-  };
-
   const handleHoverStart = () => {
+    if (!isDraggingRef.current) binScaleMotion?.set(1.04);
     onBinHoverChange?.(true);
   };
-
   const handleHoverEnd = () => {
+    if (!isDraggingRef.current) binScaleMotion?.set(1);
     onBinHoverChange?.(false);
   };
-
   const handleDragStart = () => {
+    isDraggingRef.current = true;
+    binScaleMotion?.set(1.07);
     reportPosition();
-    onBinDragChange?.(true);
   };
-
   const handleDragEnd = () => {
+    isDraggingRef.current = false;
+    binScaleMotion?.set(1);
     reportPosition();
-    onBinDragChange?.(false);
-    onBinHoverChange?.(false);
   };
 
   return (
@@ -135,86 +84,32 @@ export default function RecordCrate({
       constraintsRef={constraintsRef}
       className="record-crate-shell"
       label="Record crate"
+      disableScale={true}
+      onDrag={reportPosition}
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
       onDragStart={handleDragStart}
-      onDrag={handleDrag}
       onDragEnd={handleDragEnd}
-      motionX={internalMotionX}
-      motionY={internalMotionY}
     >
-      <div ref={(el) => {
-        internalCrateRef.current = el;
-        if (crateRef) crateRef.current = el;
-      }} className="crate">
+      <motion.div
+        ref={(el) => {
+          internalCrateRef.current = el;
+          if (crateRef) crateRef.current = el;
+        }}
+        className="crate"
+        style={{ scale: binScaleMotion }}
+      >
         <div className="crate-back" aria-hidden="true" />
-        {/* Front lip removed - now renders at pad level */}
-      </div>
+        <div className="crate-front" aria-hidden="true" />
+      </motion.div>
     </Sticker>
   );
 }
 
 /**
- * FrontLip - floats at pad level to render above records
- */
-export function FrontLip({ getBinPosition, binZIndex, binScaleMotion, binMotionX, binMotionY }) {
-  const lipRef = useRef(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const originX = useMotionValue(0.5);
-  const originY = useMotionValue(0.5);
-  const lipZ = binZIndex + 4;
-
-  useEffect(() => {
-    let rafId;
-    const loop = () => {
-      const binPos = getBinPosition();
-      if (binPos) {
-        const lipWidth = 128;
-        const lipHeight = 54;
-
-        const lipLeft = binPos.left;
-        const lipTop = binPos.bottom - lipHeight;
-
-        // Use the sticker's actual center (cx/cy) — matches whileHover transform-origin exactly
-        const relativeOriginX = (binPos.cx - lipLeft) / lipWidth;
-        const relativeOriginY = (binPos.cy - lipTop) / lipHeight;
-
-        x.set(lipLeft);
-        y.set(lipTop);
-        originX.set(relativeOriginX);
-        originY.set(relativeOriginY);
-      }
-      rafId = requestAnimationFrame(loop);
-    };
-    loop();
-    return () => cancelAnimationFrame(rafId);
-  }, [binMotionX, binMotionY]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <motion.div
-      ref={lipRef}
-      className="crate-front-floating"
-      style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        width: '128px',
-        height: '54px',
-        x,
-        y,
-        zIndex: lipZ,
-        pointerEvents: 'none',
-        originX,
-        originY,
-        scale: binScaleMotion,
-      }}
-    />
-  );
-}
-
-/**
- * Record - uses motion values for ALL positioning.
+ * Record — fixed-positioned at pad level. Tracks the crate's viewport position
+ * each frame. When in-bin a clip-path hides the bottom 20px that sits behind
+ * the front lip, creating the illusion of records sitting inside the bin.
  */
 export function Record({
   song,
@@ -230,57 +125,47 @@ export function Record({
   registerMotion,
   platterRef,
   getBinPosition,
-  getPlayerPosition,
   binZIndex,
   binScaleMotion,
-  binMotionX,
-  binMotionY,
-  playerScale
+  playerScale,
 }) {
   const elRef = useRef(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const originX = useMotionValue(0.5);
   const originY = useMotionValue(0.5);
-  const baseZ = binZIndex + 1 + slot; // Bin + 1/2/3 based on slot
-  const [z, setZ] = useState(baseZ);
+  const [z, setZ] = useState(binZIndex + 1 + slot);
   const [playing, setPlaying] = useState(false);
   const [state, setState] = useState('in-bin');
-
-  // Slot offsets within bin
+  // Slot offsets: left from crate.left, bottom from crate.bottom
+  // Slot 0 touches the left border, slot 2 touches the right border, slot 1 is
+  // centred. Bin = 128px, record = 96px, 4px visual border each side.
   const slotOffsets = [
-    { left: 10, bottom: 34 },
-    { left: 21, bottom: 34 },
-    { left: 32, bottom: 34 }
+    { left: 4,  bottom: 34 },
+    { left: 16, bottom: 34 },
+    { left: 28, bottom: 34 },
   ];
 
-  // Update baseZ when binZIndex changes
   useEffect(() => {
-    if (state === 'in-bin') {
-      setZ(binZIndex + 1 + slot);
-    }
+    if (state === 'in-bin') setZ(binZIndex + 1 + slot);
   }, [binZIndex, state, slot]);
 
-  // Register with parent
   useEffect(() => {
     registerMotion(song.id, x, y, elRef);
     register(song.id, {
       goHome: () => {
         setState('in-bin');
         setZ(binZIndex + 1 + slot);
-      }
+      },
     });
   }, [binZIndex, slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update playing state
   useEffect(() => {
     setPlaying(docked);
-    if (docked) {
-      setState('docked');
-    }
+    if (docked) setState('docked');
   }, [docked]);
 
-  // Update position based on state
+  // Track position for in-bin and docked states
   useEffect(() => {
     if (state !== 'in-bin' && state !== 'docked') return;
 
@@ -289,59 +174,45 @@ export function Record({
       if (state === 'in-bin') {
         const binPos = getBinPosition();
         if (binPos) {
-          const slotOffset = slotOffsets[slot];
-          const recordWidth = 96;
-          const recordHeight = 96;
-
-          const targetX = binPos.left + slotOffset.left;
-          const targetY = binPos.bottom - slotOffset.bottom - recordHeight;
-
-          // Use sticker's actual center (cx/cy) to match whileHover transform-origin exactly
-          const relativeOriginX = (binPos.cx - targetX) / recordWidth;
-          const relativeOriginY = (binPos.cy - targetY) / recordHeight;
-
-          x.set(targetX);
-          y.set(targetY);
-          originX.set(relativeOriginX);
-          originY.set(relativeOriginY);
+          const offset = slotOffsets[slot];
+          const tx = binPos.left + offset.left;
+          const ty = binPos.bottom - offset.bottom - 96;
+          x.set(tx);
+          y.set(ty);
+          // Match scale origin to the crate's transform-origin (sticker center)
+          if (binPos.cx !== undefined) {
+            originX.set((binPos.cx - tx) / 96);
+            originY.set((binPos.cy - ty) / 96);
+          }
         }
       } else if (state === 'docked') {
         const platter = platterRef.current;
         if (platter) {
-          const platterRect = platter.getBoundingClientRect();
-          const recordWidth = 96;
-          const recordHeight = 96;
-          const targetX = platterRect.left + (platterRect.width - recordWidth) / 2;
-          const targetY = platterRect.top + (platterRect.height - recordHeight) / 2;
-          x.set(targetX);
-          y.set(targetY);
-          originX.set(0.5);
-          originY.set(0.5);
+          const r = platter.getBoundingClientRect();
+          x.set(r.left + (r.width - 96) / 2);
+          y.set(r.top + (r.height - 96) / 2);
         }
       }
       rafId = requestAnimationFrame(loop);
     };
     loop();
-
     return () => cancelAnimationFrame(rafId);
-  }, [state, slot, binMotionX, binMotionY]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state, slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lift = () => {
     if (bringToFront) setZ(bringToFront());
   };
 
   const handleDragStart = () => {
-    if (state === 'in-bin' || state === 'docked') {
-      setState('free');
-    }
+    if (state === 'in-bin' || state === 'docked') setState('free');
   };
 
   const handleDragEnd = () => {
-    if (isOverPlatter && isOverPlatter(elRef.current)) {
+    if (isOverPlatter?.(elRef.current)) {
       onDock(song);
       setState('docked');
       setZ(100);
-    } else if (isOverCrate && isOverCrate(elRef.current)) {
+    } else if (isOverCrate?.(elRef.current)) {
       if (docked) onRelease(song.id);
       setState('in-bin');
       setZ(binZIndex + 1 + slot);
@@ -351,14 +222,13 @@ export function Record({
     }
   };
 
-  // When in-bin use shared binScaleMotion; when docked use playerScale number (animate); when free own hover/drag
   const isInBin = state === 'in-bin';
   const isDocked = state === 'docked';
 
   return (
     <motion.div
       ref={elRef}
-      className={`record-floating ${docked ? 'is-docked' : ''}`}
+      className={`record-floating${isInBin ? ' is-in-bin' : ''}${docked ? ' is-docked' : ''}`}
       data-slot={slot}
       style={{
         position: 'fixed',
@@ -369,9 +239,7 @@ export function Record({
         x,
         y,
         zIndex: z,
-        originX,
-        originY,
-        ...(isInBin ? { scale: binScaleMotion } : {})
+        ...(isInBin ? { scale: binScaleMotion, originX, originY } : {}),
       }}
       drag
       dragConstraints={constraintsRef}

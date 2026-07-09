@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import { useMotionValue } from 'framer-motion';
+import { useSpring } from 'framer-motion';
 import StickyNote from './components/StickyNote/StickyNote';
 import RecordPlayer from './components/RecordPlayer/RecordPlayer';
-import RecordCrate, { Record, FrontLip } from './components/RecordCrate/RecordCrate';
+import RecordCrate, { Record } from './components/RecordCrate/RecordCrate';
 import BookStack from './components/BookStack/BookStack';
 import BookCovers from './components/BookCovers/BookCovers';
 import FaceSticker from './components/FaceSticker/FaceSticker';
@@ -45,11 +45,8 @@ export default function App() {
   const [playerIsHovering, setPlayerIsHovering] = useState(false);
   const [playerIsDragging, setPlayerIsDragging] = useState(false);
 
-  // Bin motion values for synchronous updates
-  const binMotionX = useMotionValue(0);
-  const binMotionY = useMotionValue(0);
-  // Plain MotionValue — scale is read from the sticker's actual CSS transform each frame
-  const binScaleMotion = useMotionValue(1);
+  // Spring that records mirror when the crate is hovered/dragged
+  const binScaleMotion = useSpring(1, { stiffness: 320, damping: 26 });
 
   // Calculate player scale based on state
   const playerScale = playerIsDragging ? 1.07 : playerIsHovering ? 1.04 : 1;
@@ -138,8 +135,6 @@ export default function App() {
     playerPosition.current = pos;
   };
 
-  const handleBinHoverChange = () => {};
-  const handleBinDragChange = () => {};
 
   // State updaters for player hover/drag
   const handlePlayerHoverChange = (isHovering) => {
@@ -161,7 +156,7 @@ export default function App() {
         </div>
 
         <RecordPlayer
-          x="75.9%"
+          x="79.5%"
           y="65.1%"
           rotate={0}
           z={1}
@@ -181,26 +176,13 @@ export default function App() {
         <RecordCrate
           x="65.9%"
           y="calc(64.0% + 64px)"
-          rotate={2}
+          rotate={0}
           z={2}
           enterDelay={delay(0)}
           bringToFront={bringBinToFront}
           constraintsRef={padRef}
-          dockedId={dockedId}
-          isOverPlatter={isOverPlatter}
-          isOverCrate={isOverCrate}
-          onDock={dockRecord}
-          onRelease={releaseDock}
-          register={register}
-          registerRecordMotion={registerRecordMotion}
-          platterRef={platterRef}
           crateRef={crateRef}
-          getBinPosition={getBinPosition}
           onBinMove={handleBinMove}
-          onBinHoverChange={handleBinHoverChange}
-          onBinDragChange={handleBinDragChange}
-          binMotionX={binMotionX}
-          binMotionY={binMotionY}
           binScaleMotion={binScaleMotion}
         />
 
@@ -221,17 +203,11 @@ export default function App() {
             registerMotion={registerRecordMotion}
             platterRef={platterRef}
             getBinPosition={getBinPosition}
-            getPlayerPosition={getPlayerPosition}
             binZIndex={binZIndex}
             binScaleMotion={binScaleMotion}
-            binMotionX={binMotionX}
-            binMotionY={binMotionY}
             playerScale={playerScale}
           />
         ))}
-
-        {/* Front lip of bin renders above records */}
-        <FrontLip getBinPosition={getBinPosition} binZIndex={binZIndex} binScaleMotion={binScaleMotion} binMotionX={binMotionX} binMotionY={binMotionY} />
 
         <BookStack
           x="13.7%"

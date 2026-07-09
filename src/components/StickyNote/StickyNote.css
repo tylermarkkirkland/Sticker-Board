@@ -43,15 +43,28 @@
 }
 
 /* ── Yellow — image-backed ──────────────────────────────────── */
+/*
+ * The source PNG (1024×1024) has ~18% transparent padding on all sides — the
+ * actual paper sits from roughly (174,182) to (838,835). We size the element to
+ * just the paper + ~10px shadow margin so the hit area hugs the visible sticker.
+ *
+ * Math (shadow margin ≈ 45px in image space):
+ *   display bbox in image: left=129, top=137, right=883, bottom=880  (size 754×743)
+ *   background-size: 1024/754 × 168 ≈ 228px
+ *   background-position-x: -(129/1024 × 228) ≈ -29px
+ *   background-position-y: -(137/1024 × 228) ≈ -31px
+ *   element width : 168px  element height: 166px
+ */
 .sticky-note--yellow {
   background-image: url('/sticky-note-yellow.png');
-  background-size: cover;
+  background-size: 228px 228px;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: -29px -31px;
   background-color: transparent;
-  width: 200px;
-  height: 200px;
-  padding: 44px 44px 52px 44px;
+  width: 168px;
+  height: 166px;
+  /* padding pushes text ~8px inside the paper edge (paper starts ~10px from element edge) */
+  padding: 18px 18px 26px 18px;
   clip-path: none;
   border-radius: 0;
 }
@@ -60,11 +73,10 @@
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
     linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
-    linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
     linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08));
-  background-size: 100% 1px, 100% 1px, 100% 1px, 75% 1px;
+  background-size: 100% 1px, 100% 1px, 100% 1px;
   background-repeat: no-repeat;
-  background-position: 0 25px, 0 51px, 0 77px, 0 103px;
+  background-position: 0 25px, 0 51px, 0 77px;
 }
 
 /* ── Pink — top-right corner torn/ripped ───────────────────── */
