@@ -11,7 +11,7 @@
 }
 
 /* Lifted off the board while dragging: a tight, close shadow appears so it
-   reads as lifted just an inch off the desk. It vanishes the moment it's
+   reads as lifted just an inch off the board. It vanishes the moment it's
    placed. */
 .sticker.is-lifted {
   cursor: grabbing;

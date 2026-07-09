@@ -1,8 +1,8 @@
-# The Sticker Desk
+# The Sticker Board
 
-A playful, interactive "creative desk" microsite — a dark board scattered with
-draggable sticker objects. A personal portfolio experiment, not tied to any
-brand or product.
+A playful, interactive microsite — a dark board scattered with draggable
+sticker objects. A personal portfolio experiment, not tied to any brand or
+product.
 
 ## Run it
 
@@ -13,7 +13,7 @@ npm run build    # production build into /dist
 npm run preview  # preview the production build
 ```
 
-## What's on the desk
+## What's on the board
 
 | Object | What it does |
 | --- | --- |
@@ -24,7 +24,7 @@ npm run preview  # preview the production build
 | **Book stack** (bottom-left) | Click to fan out four book covers. Click any cover to flip it and read the tags + a favorite quote. |
 | **X badge** (top-right) | Opens my X / Twitter profile in a new tab. |
 
-Every object is **draggable** anywhere on the desk and lifts to the front when
+Every object is **draggable** anywhere on the board and lifts to the front when
 you grab it. Hovering gives a subtle scale + shadow lift.
 
 ## How it's built
@@ -53,11 +53,11 @@ output directory `dist`. No extra config needed.
 After deploying, update the absolute social-card URLs in `index.html`
 (`og:url`, `og:image`, `twitter:image`) to your real domain so link previews
 resolve. A 1200×630 preview image lives at `public/og-image.png` — regenerate it
-from a screenshot of the live desk if you rearrange things.
+from a screenshot of the live board if you rearrange things.
 
 ## Notes
 
-- Designed for desktop / larger viewports (it's a spatial "desk").
+- Designed for desktop / larger viewports (it's a spatial "board").
 - Respects `prefers-reduced-motion`: CSS animations and the JS entrance/ambient
   motion are neutralized; drag/hover/dock feedback (user-initiated) stays.
 - Keyboard: the book stack and X badge are focusable and activate with

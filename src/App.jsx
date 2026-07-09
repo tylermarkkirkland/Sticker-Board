@@ -145,7 +145,7 @@ export default function App() {
         <span className="pad-screw pad-screw--right" aria-hidden="true" />
 
         <div className="pad-intro">
-          <h1>The Sticker Desk</h1>
+          <h1>The Sticker Board</h1>
         </div>
 
         <RecordPlayer

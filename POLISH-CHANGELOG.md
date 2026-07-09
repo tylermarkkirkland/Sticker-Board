@@ -134,3 +134,14 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   and full-size PNGs.
 - **Revert:** `git revert b10f80d` (or restore originals from baseline
   `e4ab766`).
+
+### 8. Rename "The Sticker Desk" → "The Sticker Board" (user feedback)
+- **What:** Reverted the earlier name choice (items 2 & 4). The product is now
+  "The Sticker Board" everywhere: on-board H1, tab `<title>`, OG/Twitter titles
+  + descriptions, placeholder deploy domain (`sticker-board.vercel.app`), README,
+  and a stray "desk" metaphor in `Sticker.css`. Regenerated `public/og-image.png`
+  so the card shows the new title.
+- **Why:** "Desk" didn't fit; the scene reads as a board of stickers.
+- **Files:** `src/App.jsx`, `index.html`, `README.md`,
+  `src/components/Sticker/Sticker.css`, `public/og-image.png`.
+- **Revert:** `git revert <this commit>` (restores "The Sticker Desk").
