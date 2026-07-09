@@ -13,15 +13,8 @@ import songs from './data/songs';
 import { getMood } from './data/reactions';
 import './App.css';
 
-// Set to true to re-enable the color sticky note stack in the bottom-right corner
-const ENABLE_NOTE_STACK = false;
-
 const NOTES = [
-  { id: 'n1', variant: 'yellow',   small: false, x: '3.3%', y: '13.7%', rotate:  -2, defaultText: 'Hello, welcome to my sticker board :)' },
-  { id: 'n2', variant: 'lavender', small: true,  x: '81%', y: '78%', rotate: -5, defaultText: '' },
-  { id: 'n3', variant: 'blue',     small: true,  x: '81%', y: '78%', rotate:  3, defaultText: '' },
-  { id: 'n4', variant: 'pink',     small: true,  x: '81%', y: '78%', rotate: -2, defaultText: '' },
-  { id: 'n5', variant: 'green',    small: true,  x: '81%', y: '78%', rotate:  5, defaultText: '' },
+  { id: 'n1', variant: 'yellow', small: false, x: '3.3%', y: '13.7%', rotate: -2, defaultText: 'Hello, welcome to my sticker board :)' },
 ];
 
 export default function App() {
@@ -52,7 +45,7 @@ export default function App() {
   const playerScale = playerIsDragging ? 1.07 : playerIsHovering ? 1.04 : 1;
 
   // Music state
-  const { currentId, play, stop, togglePlayPause, isPlaying } = useTrackPreview();
+  const { play, stop } = useTrackPreview();
   const [dockedId, setDockedId] = useState(null);
   const recordApis = useRef({});
   const recordMotionValues = useRef({});
@@ -152,7 +145,7 @@ export default function App() {
         <span className="pad-screw pad-screw--right" aria-hidden="true" />
 
         <div className="pad-intro">
-          <h1>The Sticker Board</h1>
+          <h1>The Sticker Desk</h1>
         </div>
 
         <RecordPlayer
@@ -169,8 +162,6 @@ export default function App() {
           onPlayerMove={handlePlayerMove}
           onPlayerHoverChange={handlePlayerHoverChange}
           onPlayerDragChange={handlePlayerDragChange}
-          onTogglePlayPause={togglePlayPause}
-          isPlaying={isPlaying()}
         />
 
         <RecordCrate
@@ -219,7 +210,7 @@ export default function App() {
           onExpand={() => setBooksOpen(true)}
         />
 
-        {NOTES.filter((note) => note.id === 'n1' || ENABLE_NOTE_STACK).map((note, i) => (
+        {NOTES.map((note, i) => (
           <StickyNote
             key={note.id}
             id={note.id}

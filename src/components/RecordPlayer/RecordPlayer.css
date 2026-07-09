@@ -41,34 +41,6 @@
   z-index: 0; /* below a docked record */
 }
 
-.platter-play-pause {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 50px;
-  height: 50px;
-  font-size: 20px;
-  color: #f4f1ea;
-  background: rgba(42, 45, 52, 0.85);
-  border: 2px solid #f4f1ea;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  pointer-events: auto;
-  user-select: none;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.platter-play-pause:hover {
-  background: rgba(42, 45, 52, 0.95);
-  border-color: #fff;
-}
-
 /* Tonearm */
 .tonearm {
   position: absolute;

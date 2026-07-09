@@ -21,8 +21,6 @@ export default function RecordPlayer({
   onPlayerMove,
   onPlayerHoverChange,
   onPlayerDragChange,
-  onTogglePlayPause,
-  isPlaying
 }) {
   // Report player position to parent
   const reportPosition = () => {
