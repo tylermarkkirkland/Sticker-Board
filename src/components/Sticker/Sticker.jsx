@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import './Sticker.css';
 
 /**
@@ -53,6 +53,10 @@ export default function Sticker({
 }) {
   const [zIndex, setZIndex] = useState(z);
   const [isDragging, setIsDragging] = useState(false);
+  // When the OS/browser requests reduced motion, we drop the entrance
+  // slide/scale and any ambient drift so pieces just appear. Interaction
+  // feedback (drag, hover, dock) is user-initiated and stays intact.
+  const shouldReduceMotion = useReducedMotion();
 
   const lift = () => {
     if (bringToFront) setZIndex(bringToFront());
@@ -73,8 +77,8 @@ export default function Sticker({
   };
 
   // Inner layer: entrance settles once, then either loops a gentle bob
-  // (drift) or rests at the base tilt.
-  const driftAnimation = drift
+  // (drift) or rests at the base tilt. Reduced motion skips the bob loop.
+  const driftAnimation = (drift && !shouldReduceMotion)
     ? {
         y: [0, drift.y ?? -8, 0],
         rotate: [rotate, rotate + (drift.rotate ?? 1.5), rotate],
@@ -125,9 +129,14 @@ export default function Sticker({
     >
       <motion.div
         className={`sticker-inner ${className}`}
-        initial={{ opacity: 0, scale: 0.9, y: 26 }}
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: 26 }}
         animate={driftAnimation}
-        transition={{
+        transition={shouldReduceMotion ? {
+          opacity: { delay: enterDelay, duration: 0.3 },
+          scale: { duration: 0 },
+          y: { duration: 0 },
+          rotate: { duration: 0 },
+        } : {
           opacity: { delay: enterDelay, duration: 0.4 },
           scale: { delay: enterDelay, type: 'spring', stiffness: 220, damping: 18 },
           y: drift
