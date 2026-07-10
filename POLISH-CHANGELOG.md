@@ -3,21 +3,25 @@
 A human-readable record of every change made during the "post-ready" polish pass,
 so anything can be undone if it turns out to have broken something.
 
-**Branch:** `polish/post-ready` (branched from `main` @ `79051ad`)
+**Branch:** `polish/post-ready` (branched from `main` @ `054c2ed`)
 **Guarantee:** no existing functionality was changed or removed — only unused code
 was deleted and non-behavioral polish (docs, meta tags, accessibility gating) was
 added.
 
+> Note: commit SHAs below are the post-publish values (history was rewritten
+> once to swap the work email for a personal GitHub no-reply identity before
+> pushing to GitHub). The messages are unchanged, so you can also locate any
+> commit by its message with `git log --grep`.
+
 ## How to undo
 
-- **Undo everything:** `git checkout main` (main was never touched), or delete the
-  branch: `git branch -D polish/post-ready`.
+- **Undo everything:** `git reset --hard b975b2a` returns to the baseline (the
+  pre-polish WIP) while keeping that WIP intact.
 - **Undo one change:** each item below lists its commit. Revert it alone with
   `git revert <sha>` (or `git revert <sha> --no-edit`).
-- **Baseline commit** `e4ab766` captures the exact working state from before the
+- **Baseline commit** `b975b2a` captures the exact working state from before the
   pass — the WIP that was uncommitted on `main` (RecordCrate clip-path work +
-  component tweaks). Reset to it with `git reset --hard e4ab766` to discard all
-  polish work while keeping that WIP.
+  component tweaks).
 
 ---
 
@@ -28,7 +32,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 ### 0. Safety net
 - **What:** Created branch `polish/post-ready`, committed the pre-existing
   uncommitted WIP as a baseline, added this changelog.
-- **Commit:** `e4ab766` (baseline) — this file added in the next commit.
+- **Commit:** `b975b2a` (baseline) — this file added in the next commit.
 - **Revert:** `git branch -D polish/post-ready` removes the entire pass.
 
 ### 1. Remove dead code & unused dependencies
@@ -42,7 +46,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Files:** `src/components/MusicCorner/*` (deleted), `package.json`,
   `package-lock.json`.
 - **Verified:** `npm run build` succeeds; no source imports any removed module.
-- **Revert:** `git revert c3fc9de` (restores files + deps).
+- **Revert:** `git revert 18d1e74` (restores files + deps).
 
 ### 2. Remove orphaned / inert code (no behavior change)
 - **What:**
@@ -63,7 +67,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   `src/components/RecordPlayer/RecordPlayer.css`.
 - **Note:** `useTrackPreview` still exports those methods — the hook is untouched,
   so re-wiring later is trivial.
-- **Revert:** `git revert 37df195`.
+- **Revert:** `git revert 34734fc`.
 
 ### 3. Honor prefers-reduced-motion for the JS entrance animation
 - **What:** In `src/components/Sticker/Sticker.jsx`, used Framer's
@@ -75,7 +79,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
   animations (record spin, EQ bars), but Framer's JS-driven entrance ran
   regardless. This closes that gap.
 - **Files:** `src/components/Sticker/Sticker.jsx`.
-- **Revert:** `git revert 149c284`.
+- **Revert:** `git revert dcb40a0`.
 
 ### 4. Add social cards, favicon, and unify the name (index.html)
 - **What:** Added Open Graph + Twitter Card meta, `theme-color`, and an SVG
@@ -87,7 +91,7 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **⚠ Action needed after deploy:** the `og:url`/`og:image`/`twitter:image` URLs
   use a placeholder domain `https://sticker-desk.vercel.app/`. Update them to the
   real domain so the card resolves.
-- **Revert:** `git revert 2258c10`.
+- **Revert:** `git revert 69f6974`.
 
 ### 5. Make book back-face placeholders intentional
 - **What:** `src/components/BookCovers/BookCovers.jsx` — the aria-label and code
@@ -97,14 +101,14 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Why:** Removes a broken promise to screen readers and the "placeholder" smell
   without inventing fake rating data.
 - **Files:** `src/components/BookCovers/BookCovers.jsx`.
-- **Revert:** `git revert b861077`.
+- **Revert:** `git revert 1a84590`.
 
 ### 6. Rewrite README + add deploy docs
 - **What:** Replaced the out-of-date README (which described a concert poster,
   design badge, blob character, and a nonexistent `useChimeLoop.js`) with an
   accurate description of the real desk, plus a Deploy section.
 - **Files:** `README.md`.
-- **Revert:** `git revert df1bcfa`.
+- **Revert:** `git revert b42339e`.
 
 ### 7. Optimize heavy assets (own commit — highest fidelity risk)
 - **What:**
@@ -130,10 +134,10 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Fidelity note:** AAC at 192 kbps is perceptually transparent for a looped
   music preview, and the image downscale is invisible at display size. **Please
   spot-check audio playback in a normal browser** (the headless preview can't
-  autoplay); if anything sounds off, `git revert b10f80d` restores the WAVs
+  autoplay); if anything sounds off, `git revert 24c8182` restores the WAVs
   and full-size PNGs.
-- **Revert:** `git revert b10f80d` (or restore originals from baseline
-  `e4ab766`).
+- **Revert:** `git revert 24c8182` (or restore originals from baseline
+  `b975b2a`).
 
 ### 8. Rename "The Sticker Desk" → "The Sticker Board" (user feedback)
 - **What:** Reverted the earlier name choice (items 2 & 4). The product is now
