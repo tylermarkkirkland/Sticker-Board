@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import Sticker from '../Sticker/Sticker';
+import { bookCoverImages } from '../BookCovers/BookCovers';
 import './BookStack.css';
 
 const STACK = '/book-stack.png';        // tight static stack
@@ -15,6 +17,17 @@ const STACK_W = 196; // render width on the board (15% smaller than the prior 23
  * spreading apart in place.
  */
 export default function BookStack({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef, onExpand }) {
+  // Preload the expanded-view cover images (low priority, after first paint) so
+  // the overlay's fan-in is instant the first time it opens, instead of the
+  // covers fetching only when the overlay mounts.
+  useEffect(() => {
+    bookCoverImages.forEach((src) => {
+      const img = new Image();
+      img.fetchPriority = 'low';
+      img.src = src;
+    });
+  }, []);
+
   return (
     <Sticker
       x={x}

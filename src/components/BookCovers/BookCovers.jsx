@@ -35,6 +35,10 @@ const BOOKS = [
   },
 ];
 
+// Cover image paths, exported so the always-mounted BookStack can preload them
+// before the overlay ever opens (the covers only mount when it does).
+export const bookCoverImages = BOOKS.map((b) => b.cover);
+
 // Slight fan: rotation + vertical offset per card so the row arcs gently.
 const FAN = [
   { rotate: -8, y: 10 },

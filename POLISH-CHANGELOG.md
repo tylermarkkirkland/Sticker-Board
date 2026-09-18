@@ -149,3 +149,23 @@ _(Entries added as work proceeds. Each lists: what, why, files, commit, revert.)
 - **Files:** `src/App.jsx`, `index.html`, `README.md`,
   `src/components/Sticker/Sticker.css`, `public/og-image.png`.
 - **Revert:** `git revert <this commit>` (restores "The Sticker Desk").
+
+### 9. Preload off-screen sticker image variants (no behavior change)
+- **What:** Warm the browser cache for images that aren't visible at first, so
+  they swap in instantly instead of fetching on first use:
+  - `FaceSticker.jsx`: preloads `face-happy/sad/secret.png` on mount (the face
+    swaps a single `<img src>`, so previously each variant only loaded the first
+    time its mood fired — a late pop behind the 80ms crossfade).
+  - `BookStack.jsx`: preloads the four `book-cover-*.png` on mount (they only
+    mount when the overlay opens, so the first open could pop). Cover paths are
+    exported from `BookCovers.jsx` as `bookCoverImages`.
+  - Both use `new Image()` with `fetchPriority = 'low'` inside a mount-only
+    `useEffect`, so preloads run after first paint and don't compete with the
+    visible assets.
+- **Why:** Remove first-swap/first-open loading clunkiness.
+- **Verified:** Build passes; a headless load with **no interaction** fetches all
+  three extra faces and all four covers (HTTP 200); no console errors. Purely
+  additive — no interaction, rendering, or capability changed.
+- **Files:** `src/components/FaceSticker/FaceSticker.jsx`,
+  `src/components/BookStack/BookStack.jsx`, `src/components/BookCovers/BookCovers.jsx`.
+- **Revert:** `git revert <this commit>` (removes the preloads; lazy loading returns).

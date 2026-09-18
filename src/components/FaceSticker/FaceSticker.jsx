@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import './FaceSticker.css';
@@ -36,6 +37,17 @@ function BubbleTail({ wide = false }) {
 
 export default function FaceSticker({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef, mood = 'neutral' }) {
   const text = bubbleText[mood] ?? null;
+
+  // Preload every face variant up front (low priority, after first paint) so a
+  // mood change swaps instantly. Without this, happy/sad/secret each fetch only
+  // the first time their mood fires and pop in a beat late behind the crossfade.
+  useEffect(() => {
+    Object.values(faceImgs).forEach((src) => {
+      const img = new Image();
+      img.fetchPriority = 'low';
+      img.src = src;
+    });
+  }, []);
 
   return (
     <Sticker
