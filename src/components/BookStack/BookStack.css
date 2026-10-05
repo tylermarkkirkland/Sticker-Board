@@ -40,9 +40,21 @@
   opacity: 0;
 }
 
-.book-stack-shell:hover .book-stack-img--static {
+/* Spread state is driven by the corner peel (see BookStack.jsx) so the books
+   spread first, then peel, and only close up once the corner is flat. */
+.book-stack.is-spread .book-stack-img--static {
   opacity: 0;
 }
-.book-stack-shell:hover .book-stack-img--hover {
+.book-stack.is-spread .book-stack-img--hover {
   opacity: 1;
+}
+
+/* No peel under reduced motion or on touch, so fall back to plain :hover. */
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .book-stack-shell:hover .book-stack-img--static {
+    opacity: 0;
+  }
+  .book-stack-shell:hover .book-stack-img--hover {
+    opacity: 1;
+  }
 }

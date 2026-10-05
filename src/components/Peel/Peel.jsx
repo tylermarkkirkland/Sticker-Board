@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import './Peel.css';
 
@@ -52,7 +52,10 @@ const polygon = (points) => `polygon(${points.map(([x, y]) => `${x}px ${y}px`).j
  *
  * Props:
  *  - sides    which sides may peel: 'tl' 'tr' 'bl' 'br' corners, or
- *             'l' 'r' 't' 'b' edges (default: ['tr'])
+ *             'l' 'r' 't' 'b' edges (default: ['tr']). For irregular art,
+ *             a side can be a custom tip: { x, y, nx, ny } — the tip point
+ *             in box px and the direction it points out of the sticker
+ *             (ideally splitting the corner's angle evenly).
  *  - size     max fold depth in px (along the edges for a corner, straight
  *             in for an edge)
  *  - inset    px (or {top,right,bottom,left}) from the box edge to the real
@@ -63,6 +66,11 @@ const polygon = (points) => `polygon(${points.map(([x, y]) => `${x}px ${y}px`).j
  *  - mask     { src, size, x, y } for cut-out art: the flap takes the image's
  *             silhouette; x/y place the image relative to the box
  *  - fill     stretch the wrapper to its parent (for fixed-size parents)
+ *  - delay    ms to wait after the cursor arrives before lifting, e.g. to
+ *             let the sticker's own hover transition finish first
+ *  - onActiveChange(bool)  true when the cursor arrives, false once the peel
+ *             has fully settled back after it leaves — lets a sticker hold
+ *             its hover look until the corner is flat again
  */
 export default function Peel({
   sides = ['tr'],
@@ -72,6 +80,8 @@ export default function Peel({
   back = '#f4f1ea',
   mask,
   fill = false,
+  delay = 0,
+  onActiveChange,
   children,
 }) {
   const reduceMotion = useReducedMotion();
@@ -79,6 +89,10 @@ export default function Peel({
   const geo = useRef({ w: 0, h: 0, side: sides[0] });
   const pending = useRef(null);
   const target = useRef(0);
+  const delayTimer = useRef(null);
+  const waiting = useRef(false); // inside the enter delay, not lifted yet
+  const active = useRef(false);
+  const hovering = useRef(false);
   // Slightly under-damped so the corner lifts with a little springy give.
   const depth = useSpring(0, { stiffness: 340, damping: 19, mass: 0.7 });
   const ins = toInset(inset);
@@ -92,15 +106,17 @@ export default function Peel({
     const y0 = ins.top;
     const x1 = w - ins.right;
     const y1 = h - ins.bottom;
-    const [sx, sy] = SIDES[side];
+    const custom = typeof side === 'object';
+    const [sx, sy] = custom ? [side.nx, side.ny] : SIDES[side];
     const len = Math.hypot(sx, sy);
     const nx = sx / len;
     const ny = sy / len;
     // Outermost point of the sticker in that direction.
-    const cx = sx > 0 ? x1 : x0;
-    const cy = sy > 0 ? y1 : y0;
-    // Corner depth is measured along the edges, so the crease sits d/√2 in.
-    const inward = sx && sy ? d / Math.SQRT2 : d;
+    const cx = custom ? side.x : sx > 0 ? x1 : x0;
+    const cy = custom ? side.y : sy > 0 ? y1 : y0;
+    // Box-corner depth is measured along the edges, so the crease sits d/√2
+    // in; edges and custom tips fold straight in by d.
+    const inward = !custom && sx && sy ? d / Math.SQRT2 : d;
     const k = nx * cx + ny * cy - inward;
     return { d, w, h, x0, y0, x1, y1, nx, ny, k, inward };
   };
@@ -145,10 +161,17 @@ export default function Peel({
     let best = sides[0];
     let bestDist = Infinity;
     sides.forEach((s) => {
-      const [sx, sy] = SIDES[s];
-      // Corners measure to the corner point; edges to the edge line.
-      const tx = sx ? (sx > 0 ? 1 : 0) : px;
-      const ty = sy ? (sy > 0 ? 1 : 0) : py;
+      // Corners and tips measure to their point; edges to the edge line.
+      let tx;
+      let ty;
+      if (typeof s === 'object') {
+        tx = s.x / geo.current.w;
+        ty = s.y / geo.current.h;
+      } else {
+        const [sx, sy] = SIDES[s];
+        tx = sx ? (sx > 0 ? 1 : 0) : px;
+        ty = sy ? (sy > 0 ? 1 : 0) : py;
+      }
       const dist = Math.hypot(px - tx, py - ty);
       if (dist < bestDist) {
         best = s;
@@ -160,25 +183,50 @@ export default function Peel({
     return { side: best, amount: size * (0.55 + 0.45 * closeness) };
   };
 
-  // Retract before switching sides, then lift the new one.
+  const setActive = (on) => {
+    if (active.current === on) return;
+    active.current = on;
+    onActiveChange?.(on);
+  };
+
+  // Flat and (nearly) still — the springy overshoot has finished.
+  const isSettledFlat = () => Math.abs(depth.get()) < 0.5 && Math.abs(depth.getVelocity()) < 20;
+
   useMotionValueEvent(depth, 'change', (v) => {
+    // Retract before switching sides, then lift the new one.
     if (pending.current && v < 1) {
       geo.current.side = pending.current;
       pending.current = null;
       depth.set(target.current);
     }
+    // Report "inactive" only once the corner has come to rest flat.
+    if (!hovering.current && isSettledFlat()) setActive(false);
   });
+
+  useEffect(() => () => clearTimeout(delayTimer.current), []);
 
   const aim = (e, entering) => {
     if (e.pointerType === 'touch') return;
     const el = wrapRef.current;
     if (entering) {
+      hovering.current = true;
       geo.current.w = el.offsetWidth;
       geo.current.h = el.offsetHeight;
+      setActive(true);
+      if (delay > 0) {
+        waiting.current = true;
+        clearTimeout(delayTimer.current);
+        delayTimer.current = setTimeout(() => {
+          waiting.current = false;
+          depth.set(target.current);
+        }, delay);
+      }
     }
     const { side, amount } = nearestSide(e);
     target.current = amount;
-    if (entering || depth.get() < 1) {
+    if (waiting.current) {
+      geo.current.side = side;
+    } else if (entering || depth.get() < 1) {
       geo.current.side = side;
       pending.current = null;
       depth.set(amount);
@@ -191,8 +239,13 @@ export default function Peel({
   };
 
   const release = () => {
+    hovering.current = false;
     pending.current = null;
+    clearTimeout(delayTimer.current);
+    waiting.current = false;
     depth.set(0);
+    // Never lifted (left during the delay): nothing to wait for.
+    if (isSettledFlat()) setActive(false);
   };
 
   if (reduceMotion) return children;
