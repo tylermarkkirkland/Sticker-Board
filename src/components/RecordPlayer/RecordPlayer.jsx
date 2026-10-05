@@ -1,11 +1,23 @@
-import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import './RecordPlayer.css';
+
+// Tonearm angles. The arm starts pointing left from its pivot; negative
+// rotation swings it down. Rest parks it beside the platter, play drops the
+// needle onto the outer grooves of a docked record.
+const ARM_REST = -90;
+const ARM_PLAY = -64;
+const BODY_SIZE = 150;
 
 /**
  * RecordPlayer — draggable turntable sticker.
  * Reports position changes for docked record tracking.
+ *
+ * The tonearm is rendered OUTSIDE the sticker on its own fixed layer, because
+ * docked records live at pad level above every sticker. The layer copies the
+ * body's on-screen center, scale and opacity each frame so it moves as one
+ * piece with the player while sitting on top of the record.
  */
 export default function RecordPlayer({
   x,
@@ -22,6 +34,25 @@ export default function RecordPlayer({
   onPlayerHoverChange,
   onPlayerDragChange,
 }) {
+  const bodyRef = useRef(null);
+  const armX = useMotionValue(0);
+  const armY = useMotionValue(0);
+  const armScale = useMotionValue(1);
+  const armOpacity = useMotionValue(0);
+
+  // Keep the tonearm layer glued to the turntable body. Center is invariant
+  // under the body's scale, so center + width-derived scale is exact.
+  const syncArm = () => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const rect = body.getBoundingClientRect();
+    armX.set(rect.left + rect.width / 2 - BODY_SIZE / 2);
+    armY.set(rect.top + rect.height / 2 - BODY_SIZE / 2);
+    armScale.set(rect.width / BODY_SIZE);
+    const inner = body.closest('.sticker-inner');
+    if (inner) armOpacity.set(Number(getComputedStyle(inner).opacity));
+  };
+
   // Report player position to parent
   const reportPosition = () => {
     if (!platterRef.current || !onPlayerMove) return;
@@ -39,6 +70,7 @@ export default function RecordPlayer({
     let rafId;
     const loop = () => {
       reportPosition();
+      syncArm();
       rafId = requestAnimationFrame(loop);
     };
     loop();
@@ -70,6 +102,7 @@ export default function RecordPlayer({
   };
 
   return (
+    <>
     <Sticker
       x={x}
       y={y}
@@ -87,19 +120,10 @@ export default function RecordPlayer({
       onDragEnd={handleDragEnd}
     >
       <div ref={playerRef} className="turntable">
-        <div className="turntable-body">
+        <div ref={bodyRef} className="turntable-body">
           <div ref={platterRef} className="platter">
             <span className="platter-spindle" />
           </div>
-          <motion.div
-            className="tonearm"
-            animate={{ rotate: dockedSong ? -20 : -42 }}
-            transition={{ type: 'spring', stiffness: 120, damping: 14 }}
-          >
-            <span className="tonearm-base" />
-            <span className="tonearm-rod" />
-            <span className="tonearm-head" />
-          </motion.div>
         </div>
 
         <AnimatePresence>
@@ -133,5 +157,24 @@ export default function RecordPlayer({
         </AnimatePresence>
       </div>
     </Sticker>
+
+    <motion.div
+      className="tonearm-layer"
+      aria-hidden="true"
+      style={{ x: armX, y: armY, scale: armScale, opacity: armOpacity }}
+    >
+      <motion.div
+        className="tonearm"
+        initial={false}
+        animate={{ rotate: dockedSong ? ARM_PLAY : ARM_REST }}
+        // Small delay on the way in so the record lands before the needle drops.
+        transition={{ type: 'spring', stiffness: 90, damping: 16, delay: dockedSong ? 0.2 : 0 }}
+      >
+        <span className="tonearm-base" />
+        <span className="tonearm-rod" />
+        <span className="tonearm-head" />
+      </motion.div>
+    </motion.div>
+    </>
   );
 }

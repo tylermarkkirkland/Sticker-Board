@@ -41,14 +41,25 @@
   z-index: 0; /* below a docked record */
 }
 
-/* Tonearm */
+/* Tonearm — lives on its own fixed layer that mirrors the turntable body
+   (same 150×150 box), stacked above docked records (z-index 100). */
+.tonearm-layer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 150px;
+  height: 150px;
+  pointer-events: none; /* never blocks grabbing the record or the player */
+  z-index: 101;
+}
 .tonearm {
   position: absolute;
   top: 8px;
   right: 6px;
   width: 56px;
   height: 56px;
-  transform-origin: top right;
+  transform-origin: calc(100% - 6.5px) 6.5px; /* pivot on the base's center */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45)); /* reads as sitting on the record */
 }
 .tonearm-base {
   position: absolute;
@@ -92,10 +103,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   text-align: center;
-  width: 158px;
-  padding: 18px 8px 8px 8px;
+  width: 158px; /* 150px body + the 4px die-cut border on each side */
+  /* 18px tucked behind the body + 4px border ring + 8px breathing room,
+     so the title always starts below the body's bottom edge. */
+  padding: 30px 10px 12px 10px;
+  box-sizing: border-box;
   background: #f4f1ea;
   border-radius: 0 0 18px 18px;
   overflow: hidden;
@@ -103,13 +117,13 @@
 }
 
 .np-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: block; /* inline flow keeps the EQ hugging the title, even when it wraps */
   font-size: 11px;
   letter-spacing: 0.04em;
   color: #202121; /* Dark text for readability on light background */
-  max-width: 150px;
+  max-width: 100%;
+  line-height: 1.3;
+  text-wrap: balance; /* long titles wrap onto two even lines instead of clipping */
 }
 .np-link {
   font-size: 10px;
@@ -126,6 +140,8 @@
   align-items: flex-end;
   gap: 2px;
   height: 11px;
+  margin-right: 6px;
+  vertical-align: -1px;
 }
 .np-eq i {
   width: 3px;
