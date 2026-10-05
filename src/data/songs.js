@@ -17,15 +17,15 @@ const songs = [
     streamUrl: 'https://open.spotify.com/track/6SGhtQFhVx7vhgEMDxSGG6?si=e568402a4cec49b5',
   },
   {
-    id: 'wait',
-    title: 'Wait',
+    id: 'not-too-late',
+    title: 'Not too late',
     artist: 'Tyler Mark',
-    file: '/audio/wait.m4a',
+    file: '/audio/not-too-late.m4a',
     start: 0,
     end: 30,
     color: '#5cc6ff',
-    labelImage: '/images/wait.png',
-    // No streamUrl - this track has no Spotify link
+    labelImage: '/images/not-too-late.png',
+    streamUrl: 'https://open.spotify.com/track/2YzNMlVjTqsbqOnvj26tPV?si=3b1947cfee624ecc',
   },
   {
     id: 'third-times-the-charm',
