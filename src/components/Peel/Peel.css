@@ -1,0 +1,20 @@
+.peel {
+  position: relative;
+}
+
+/* The flap mirrors the whole box; only its corner triangle is visible. */
+.peel-flap {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  /* Soft contact shadow where the lifted corner hovers over the sticker. */
+  filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 5px rgba(0, 0, 0, 0.22));
+  z-index: 3;
+}
+
+.peel-flap-face {
+  position: absolute;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}

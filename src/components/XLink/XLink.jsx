@@ -22,6 +22,7 @@ export default function XLink({ x, y, rotate, z, enterDelay, bringToFront, const
       bringToFront={bringToFront}
       constraintsRef={constraintsRef}
       className="xlink-shell"
+      peel={{ size: 17, inset: -3, radius: 14, back: '#f4f1ea' }}
       label="My X profile — opens in a new tab"
       interactive
       onClick={open}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import Peel from '../Peel/Peel';
 import './Sticker.css';
 
 /**
@@ -25,6 +26,7 @@ import './Sticker.css';
  *  - label          accessible label / title
  *  - interactive    if true, renders as a button-like focusable element
  *  - enterDelay     stagger for the entrance animation
+ *  - peel           optional Peel props; lifts the nearest corner on hover
  */
 export default function Sticker({
   x,
@@ -49,6 +51,7 @@ export default function Sticker({
   enterDelay = 0,
   motionX,
   motionY,
+  peel,
   children,
 }) {
   const [zIndex, setZIndex] = useState(z);
@@ -147,7 +150,7 @@ export default function Sticker({
             : { delay: enterDelay, type: 'spring', stiffness: 220, damping: 20 },
         }}
       >
-        {children}
+        {peel ? <Peel {...peel}>{children}</Peel> : children}
       </motion.div>
     </motion.div>
   );

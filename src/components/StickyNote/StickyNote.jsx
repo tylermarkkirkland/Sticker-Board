@@ -70,6 +70,7 @@ export default function StickyNote({
       bringToFront={bringToFront}
       constraintsRef={constraintsRef}
       className="sticky-note-shell"
+      peel={{ corners: ['tl', 'tr', 'bl'], size: 30, inset: 10, back: '#efe3a6' }}
       label="Editable sticky note"
       onClick={beginEdit}
       onDoubleClick={beginEditSelectAll}
