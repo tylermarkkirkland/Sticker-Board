@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
+import Peel from '../Peel/Peel';
 import './RecordCrate.css';
 
 /**
@@ -254,13 +255,16 @@ export function Record({
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
       aria-label={`Record: ${song.title}. Drag onto the player to play.`}
     >
-      <span
-        className={`record-disc ${playing ? 'is-spinning' : ''}`}
-        style={{ '--label': song.labelImage ? `url(${song.labelImage})` : song.color }}
-      >
-        <span className="record-label" />
-        <span className="record-hole" />
-      </span>
+      {/* Round record: the left edge folds along a straight chord. */}
+      <Peel sides={['l']} size={16} inset={-3} radius="50%" back="#f4f1ea" fill>
+        <span
+          className={`record-disc ${playing ? 'is-spinning' : ''}`}
+          style={{ '--label': song.labelImage ? `url(${song.labelImage})` : song.color }}
+        >
+          <span className="record-label" />
+          <span className="record-hole" />
+        </span>
+      </Peel>
     </motion.div>
   );
 }

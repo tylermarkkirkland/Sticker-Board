@@ -2,10 +2,13 @@ import { useRef } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import './Peel.css';
 
-// Direction of each corner: +1 = right/bottom, -1 = left/top.
-const SIGNS = { tl: [-1, -1], tr: [1, -1], bl: [-1, 1], br: [1, 1] };
-// CSS gradient angle pointing from the fold toward each corner's tip.
-const ANGLES = { tl: 315, tr: 45, bl: 225, br: 135 };
+// Where each side lifts from, as a direction pointing out of the sticker.
+// Corners fold along a 45° crease; edges (l/r/t/b) fold along a straight line
+// parallel to that edge, which is what you want for round stickers.
+const SIDES = {
+  tl: [-1, -1], tr: [1, -1], bl: [-1, 1], br: [1, 1],
+  l: [-1, 0], r: [1, 0], t: [0, -1], b: [0, 1],
+};
 // How far outside the box the body clip reaches, so shadows, rings and
 // overflowing bits (speech bubbles, captions) are never cut off.
 const MARGIN = 400;
@@ -15,18 +18,18 @@ const toInset = (inset) =>
     ? { top: inset, right: inset, bottom: inset, left: inset }
     : { top: 0, right: 0, bottom: 0, left: 0, ...inset };
 
-// Clip a polygon to the half-plane sx·x + sy·y <= k (Sutherland–Hodgman).
-const clipHalfPlane = (points, sx, sy, k) => {
+// Clip a polygon to the half-plane nx·x + ny·y <= k (Sutherland–Hodgman).
+const clipHalfPlane = (points, nx, ny, k) => {
   const out = [];
-  const inside = ([x, y]) => sx * x + sy * y <= k;
+  const inside = ([x, y]) => nx * x + ny * y <= k;
   points.forEach((p, i) => {
     const q = points[(i + 1) % points.length];
     const pIn = inside(p);
     const qIn = inside(q);
     if (pIn) out.push(p);
     if (pIn !== qIn) {
-      const fp = sx * p[0] + sy * p[1] - k;
-      const fq = sx * q[0] + sy * q[1] - k;
+      const fp = nx * p[0] + ny * p[1] - k;
+      const fq = nx * q[0] + ny * q[1] - k;
       const t = fp / (fp - fq);
       out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
     }
@@ -34,93 +37,98 @@ const clipHalfPlane = (points, sx, sy, k) => {
   return out;
 };
 
+const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
 const polygon = (points) => `polygon(${points.map(([x, y]) => `${x}px ${y}px`).join(', ')})`;
 
 /**
- * Peel — lifts a corner of a sticker on hover, like a thumbnail getting under
- * the edge. The corner nearest the cursor folds back along a 45° crease,
- * showing the paper back of the sticker; moving toward the corner peels it a
- * little further, and moving to another corner swaps which one lifts.
+ * Peel — lifts a corner (or edge) of a sticker on hover, like a thumbnail
+ * getting under it. The side folds back along a crease, showing the paper
+ * back of the sticker; moving the cursor toward that side peels it a little
+ * further. With several sides allowed, the one nearest the cursor lifts.
  *
  * How it works: the content is clipped along the fold line, and a "flap" (the
  * paper back) is mirrored across that same line. One spring value (the fold
  * depth) drives both, so they can never drift apart.
  *
  * Props:
- *  - corners  which corners may peel, e.g. ['tr', 'br'] (default: all four)
- *  - size     max fold depth in px, measured along the edge from the corner
+ *  - sides    which sides may peel: 'tl' 'tr' 'bl' 'br' corners, or
+ *             'l' 'r' 't' 'b' edges (default: ['tr'])
+ *  - size     max fold depth in px (along the edges for a corner, straight
+ *             in for an edge)
  *  - inset    px (or {top,right,bottom,left}) from the box edge to the real
- *             sticker edge — for art with transparent/shadow margins
- *  - radius   corner radius of the sticker, so the flap matches it
+ *             sticker edge — for art with transparent/shadow margins.
+ *             Negative values reach outside the box (e.g. a border ring).
+ *  - radius   corner radius of the sticker ('50%' for round), for the flap
  *  - back     color of the sticker's paper back
- *  - mask     { src, size, position } for cut-out art: the flap takes the
- *             image's silhouette, positioned like the visible image
+ *  - mask     { src, size, x, y } for cut-out art: the flap takes the image's
+ *             silhouette; x/y place the image relative to the box
+ *  - fill     stretch the wrapper to its parent (for fixed-size parents)
  */
 export default function Peel({
-  corners = ['tl', 'tr', 'bl', 'br'],
+  sides = ['tr'],
   size = 24,
   inset = 0,
   radius = 0,
   back = '#f4f1ea',
   mask,
+  fill = false,
   children,
 }) {
   const reduceMotion = useReducedMotion();
   const wrapRef = useRef(null);
-  const geo = useRef({ w: 0, h: 0, corner: corners[0] });
+  const geo = useRef({ w: 0, h: 0, side: sides[0] });
   const pending = useRef(null);
   const target = useRef(0);
   // Slightly under-damped so the corner lifts with a little springy give.
   const depth = useSpring(0, { stiffness: 340, damping: 19, mass: 0.7 });
   const ins = toInset(inset);
 
-  // Rect of the real sticker inside the box, and the active corner point.
-  const frame = () => {
-    const { w, h, corner } = geo.current;
+  // Fold geometry for the active side at depth d: unit normal n pointing out
+  // of the sticker, and the fold line n·p = k.
+  const fold = (v) => {
+    const d = Math.max(0, v);
+    const { w, h, side } = geo.current;
     const x0 = ins.left;
     const y0 = ins.top;
     const x1 = w - ins.right;
     const y1 = h - ins.bottom;
-    const [sx, sy] = SIGNS[corner];
+    const [sx, sy] = SIDES[side];
+    const len = Math.hypot(sx, sy);
+    const nx = sx / len;
+    const ny = sy / len;
+    // Outermost point of the sticker in that direction.
     const cx = sx > 0 ? x1 : x0;
     const cy = sy > 0 ? y1 : y0;
-    return { x0, y0, x1, y1, sx, sy, cx, cy, corner };
+    // Corner depth is measured along the edges, so the crease sits d/√2 in.
+    const inward = sx && sy ? d / Math.SQRT2 : d;
+    const k = nx * cx + ny * cy - inward;
+    return { d, w, h, x0, y0, x1, y1, nx, ny, k, inward };
   };
 
   const bodyClip = useTransform(depth, (v) => {
-    const d = Math.max(0, v);
+    const { d, w, h, nx, ny, k } = fold(v);
     if (d < 0.5) return 'none';
-    const { w, h } = geo.current;
-    const { sx, sy, cx, cy } = frame();
-    const k = sx * cx + sy * cy - d;
-    const box = [[-MARGIN, -MARGIN], [w + MARGIN, -MARGIN], [w + MARGIN, h + MARGIN], [-MARGIN, h + MARGIN]];
-    return polygon(clipHalfPlane(box, sx, sy, k));
+    return polygon(clipHalfPlane(rect(-MARGIN, -MARGIN, w + MARGIN, h + MARGIN), nx, ny, k));
   });
 
-  // Mirror across the fold line sx·x + sy·y = k (transform-origin 0 0).
+  // Reflection across the fold line: (I − 2nnᵀ)p + 2kn, with origin 0 0.
   const flapTransform = useTransform(depth, (v) => {
-    const d = Math.max(0, v);
-    const { sx, sy, cx, cy } = frame();
-    const k = sx * cx + sy * cy - d;
-    const c = -sx * sy;
-    return `matrix(0, ${c}, ${c}, 0, ${k * sx}, ${k * sy})`;
+    const { nx, ny, k } = fold(v);
+    return `matrix(${1 - 2 * nx * nx}, ${-2 * nx * ny}, ${-2 * nx * ny}, ${1 - 2 * ny * ny}, ${2 * k * nx}, ${2 * k * ny})`;
   });
 
-  // The flap face sits on the sticker rect; only the corner triangle shows.
+  // The flap face sits on the sticker rect; only the part past the fold shows.
   const flapClip = useTransform(depth, (v) => {
-    const d = Math.max(0, v);
-    const { x0, y0, sx, sy, cx, cy } = frame();
-    const lx = cx - x0;
-    const ly = cy - y0;
-    return polygon([[lx, ly], [lx - sx * d, ly], [lx, ly - sy * d]]);
+    const { x0, y0, x1, y1, nx, ny, k } = fold(v);
+    const local = k - (nx * x0 + ny * y0);
+    return polygon(clipHalfPlane(rect(0, 0, x1 - x0, y1 - y0), -nx, -ny, -local));
   });
 
   // Crease shading: darker along the fold, a soft highlight toward the tip.
   const flapShade = useTransform(depth, (v) => {
-    const d = Math.max(0, v);
-    const f = d / Math.SQRT2; // distance from the tip to the fold
-    const { corner } = frame();
-    return `linear-gradient(${ANGLES[corner]}deg,
+    const { nx, ny, inward: f } = fold(v);
+    const angle = (Math.atan2(nx, -ny) * 180) / Math.PI;
+    return `linear-gradient(${angle}deg,
       rgba(0, 0, 0, 0.22) calc(100% - ${f}px),
       rgba(0, 0, 0, 0.06) calc(100% - ${f * 0.55}px),
       rgba(255, 255, 255, 0.35) calc(100% - ${f * 0.2}px),
@@ -129,29 +137,33 @@ export default function Peel({
 
   const flapOpacity = useTransform(depth, (v) => (v < 0.5 ? 0 : 1));
 
-  const nearestCorner = (e) => {
+  // Nearest allowed side to the cursor, and how far to peel it.
+  const nearestSide = (e) => {
     const r = wrapRef.current.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
     const py = (e.clientY - r.top) / r.height;
-    let best = corners[0];
+    let best = sides[0];
     let bestDist = Infinity;
-    corners.forEach((c) => {
-      const [sx, sy] = SIGNS[c];
-      const dist = Math.hypot(px - (sx > 0 ? 1 : 0), py - (sy > 0 ? 1 : 0));
+    sides.forEach((s) => {
+      const [sx, sy] = SIDES[s];
+      // Corners measure to the corner point; edges to the edge line.
+      const tx = sx ? (sx > 0 ? 1 : 0) : px;
+      const ty = sy ? (sy > 0 ? 1 : 0) : py;
+      const dist = Math.hypot(px - tx, py - ty);
       if (dist < bestDist) {
-        best = c;
+        best = s;
         bestDist = dist;
       }
     });
-    // Closer to the corner peels further: 55% at the far side, 100% on it.
+    // Closer to the side peels further: 55% at the far side, 100% on it.
     const closeness = Math.max(0, 1 - bestDist / Math.SQRT2);
-    return { corner: best, amount: size * (0.55 + 0.45 * closeness) };
+    return { side: best, amount: size * (0.55 + 0.45 * closeness) };
   };
 
-  // Retract before switching corners, then lift the new one.
+  // Retract before switching sides, then lift the new one.
   useMotionValueEvent(depth, 'change', (v) => {
     if (pending.current && v < 1) {
-      geo.current.corner = pending.current;
+      geo.current.side = pending.current;
       pending.current = null;
       depth.set(target.current);
     }
@@ -164,14 +176,14 @@ export default function Peel({
       geo.current.w = el.offsetWidth;
       geo.current.h = el.offsetHeight;
     }
-    const { corner, amount } = nearestCorner(e);
+    const { side, amount } = nearestSide(e);
     target.current = amount;
     if (entering || depth.get() < 1) {
-      geo.current.corner = corner;
+      geo.current.side = side;
       pending.current = null;
       depth.set(amount);
-    } else if (corner !== geo.current.corner) {
-      pending.current = corner;
+    } else if (side !== geo.current.side) {
+      pending.current = side;
       depth.set(0);
     } else if (!pending.current) {
       depth.set(amount);
@@ -185,29 +197,27 @@ export default function Peel({
 
   if (reduceMotion) return children;
 
+  const maskPosition = mask ? `${(mask.x ?? 0) - ins.left}px ${(mask.y ?? 0) - ins.top}px` : undefined;
   const maskStyle = mask
     ? {
         WebkitMaskImage: `url(${mask.src})`,
         maskImage: `url(${mask.src})`,
         WebkitMaskSize: mask.size ?? '100% 100%',
         maskSize: mask.size ?? '100% 100%',
-        WebkitMaskPosition: `${(mask.x ?? 0) - ins.left}px ${(mask.y ?? 0) - ins.top}px`,
-        maskPosition: `${(mask.x ?? 0) - ins.left}px ${(mask.y ?? 0) - ins.top}px`,
+        WebkitMaskPosition: maskPosition,
+        maskPosition,
       }
     : {};
 
   return (
     <div
       ref={wrapRef}
-      className="peel"
+      className={`peel${fill ? ' peel--fill' : ''}`}
       onPointerEnter={(e) => aim(e, true)}
       onPointerMove={(e) => aim(e, false)}
       onPointerLeave={release}
     >
-      <motion.div
-        className="peel-body"
-        style={{ clipPath: bodyClip }}
-      >
+      <motion.div className="peel-body" style={{ clipPath: bodyClip }}>
         {children}
       </motion.div>
 

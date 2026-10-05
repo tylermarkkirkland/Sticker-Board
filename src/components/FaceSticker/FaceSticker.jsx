@@ -60,9 +60,9 @@ export default function FaceSticker({ x, y, rotate, z, enterDelay, bringToFront,
       constraintsRef={constraintsRef}
       className="face-shell"
       peel={{
-        corners: ['bl', 'br'],
+        sides: ['br'],
         size: 36,
-        inset: { left: 4, right: 6, bottom: 22 },
+        inset: { right: 6, bottom: 22 },
         back: '#f4f1ea',
         mask: { src: faceImgs[mood] ?? faceImgs.neutral, size: '240px auto', x: -5, y: -8 },
       }}

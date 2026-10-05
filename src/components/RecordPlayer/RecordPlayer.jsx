@@ -114,7 +114,7 @@ export default function RecordPlayer({
       className="record-player-shell"
       // Only top-left: the caption hangs off the bottom and the tonearm
       // (its own layer) sits at top-right.
-      peel={{ corners: ['tl'], size: 30, inset: -4, radius: 22, back: '#f4f1ea' }}
+      peel={{ sides: ['tl'], size: 30, inset: -4, radius: 22, back: '#f4f1ea' }}
       label="Record player"
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}

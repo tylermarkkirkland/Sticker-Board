@@ -18,3 +18,10 @@
   mask-repeat: no-repeat;
   -webkit-mask-repeat: no-repeat;
 }
+
+/* For fixed-size parents (records): wrapper and body fill the parent box. */
+.peel--fill,
+.peel--fill > .peel-body {
+  width: 100%;
+  height: 100%;
+}
