@@ -16,7 +16,7 @@ import { getMood } from './data/reactions';
 import './App.css';
 
 const NOTES = [
-  { id: 'n1', variant: 'yellow', small: false, x: '3.3%', y: '13.7%', rotate: -2, defaultText: 'Hello, welcome to my sticker board :)' },
+  { id: 'n1', variant: 'yellow', small: false, x: '3.2%', y: '13.4%', rotate: -2, defaultText: 'Hello, welcome to my sticker board :)' },
 ];
 
 // Plant progress is a per-visitor nicety, so it lives in localStorage. Any
@@ -187,8 +187,8 @@ export default function App() {
         </div>
 
         <RecordPlayer
-          x="79.5%"
-          y="65.1%"
+          x="84.9%"
+          y="72.1%"
           rotate={0}
           z={1}
           enterDelay={delay(0)}
@@ -203,8 +203,8 @@ export default function App() {
         />
 
         <RecordCrate
-          x="65.9%"
-          y="calc(64.0% + 64px)"
+          x="70.7%"
+          y="77.1%"
           rotate={0}
           z={2}
           enterDelay={delay(0)}
@@ -239,8 +239,8 @@ export default function App() {
         ))}
 
         <BookStack
-          x="13.7%"
-          y="65.0%"
+          x="12.5%"
+          y="66.9%"
           rotate={3}
           enterDelay={delay(1)}
           bringToFront={bringToFront}
@@ -269,8 +269,8 @@ export default function App() {
         ))}
 
         <FaceSticker
-          x="33.9%"
-          y="23.1%"
+          x="36.5%"
+          y="23.6%"
           rotate={-2}
           enterDelay={delay(3)}
           bringToFront={bringToFront}
@@ -280,7 +280,7 @@ export default function App() {
 
         <XLink
           x="86.0%"
-          y="12.6%"
+          y="12.7%"
           rotate={5}
           enterDelay={delay(4)}
           bringToFront={bringToFront}
@@ -289,8 +289,8 @@ export default function App() {
         />
 
         <PlantSticker
-          x="68.0%"
-          y="31.0%"
+          x="66.8%"
+          y="14.7%"
           rotate={-3}
           enterDelay={delay(5)}
           bringToFront={bringToFront}
