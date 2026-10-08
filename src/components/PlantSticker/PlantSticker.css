@@ -1,0 +1,83 @@
+.plant {
+  position: relative;
+  transform-origin: 50% 95%; /* wiggles from the pot, like it's rooted */
+}
+
+/* Two stacked layers: every piece's border, then every piece's art. */
+.plant-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Every piece of sticker-sheet art is absolutely placed in base.png px
+   (converted in PlantSticker.jsx). */
+.plant-piece {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Hit target centered on each bud. A soft ring shows which bud you're on. */
+.plant-node {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: help;
+}
+.plant-node.is-active:not(.is-found) {
+  box-shadow: 0 0 0 2.5px rgba(255, 253, 244, 0.9);
+}
+.plant-node:focus-visible {
+  outline: 2.5px solid var(--sky);
+  outline-offset: 1px;
+}
+
+/* Hint bubble — same voice as the face's speech bubble. */
+.plant-tip {
+  position: absolute;
+  z-index: 2;
+  width: max-content;
+  max-width: 150px;
+  padding: 7px 12px 8px;
+  background: #fffdf4;
+  border-radius: 14px;
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a1a1a;
+  text-align: center;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+.plant-tip--left {
+  right: calc(50% + 30px);
+  transform-origin: right center;
+}
+.plant-tip--right {
+  left: calc(50% + 30px);
+  transform-origin: left center;
+}
+.plant-tip.is-found {
+  background: #e9f6dc;
+}
+.plant-tip.is-found::before {
+  content: '✓ ';
+  color: #3f7f33;
+}
+
+/* Announced to screen readers; the flower says it visually. */
+.plant-bloom-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
