@@ -25,6 +25,10 @@
 /* The inner layer carries the artwork + ambient bob. */
 .sticker-inner {
   will-change: transform;
+  /* Scales with the board (set on .pad in App.jsx). zoom resizes the
+     layout box, so positions (percentages of the board) stay put and
+     anything that reads on-screen rects, like the tonearm, follows. */
+  zoom: var(--board-scale, 1);
 }
 
 /* Visible focus ring for keyboard users on interactive stickers. */

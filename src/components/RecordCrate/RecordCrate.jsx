@@ -124,6 +124,10 @@ const FAN_HOVER_SCALE = 1.08;
 const LIP_H = 54;
 const LIP_RING = 4;
 const CLIP_PAD = 40; // room around the record for its ring + hover-grow
+// Records live on their own fixed layer in raw px, so unlike the zoomed
+// stickers they scale by hand: every px value above (and the record size)
+// is multiplied by the board scale.
+const RECORD = 96;
 
 const fanSlot = (index, count) => (count <= 1 ? 0 : (index / (count - 1)) * 2 - 1);
 
@@ -150,6 +154,7 @@ export function Record({
   binScaleMotion,
   playerScale,
   binSpread,
+  boardScale = 1,
   fanIndex,
   fanCount,
   onFanHover,
@@ -168,6 +173,9 @@ export function Record({
   const [fanHover, setFanHover] = useState(false);
   const fanRef = useRef({ index: fanIndex, count: fanCount });
   fanRef.current = { index: fanIndex, count: fanCount };
+  const scaleRef = useRef(boardScale);
+  scaleRef.current = boardScale;
+  const size = RECORD * boardScale;
   const [z, setZ] = useState(binZIndex + 1 + slot);
   const [playing, setPlaying] = useState(false);
   const [state, setState] = useState('in-bin');
@@ -222,15 +230,17 @@ export function Record({
       if (state === 'in-bin') {
         const binPos = getBinPosition();
         if (binPos) {
+          const k = scaleRef.current;
+          const sz = RECORD * k;
           const offset = slotOffsets[slot];
-          const restX = binPos.left + offset.left;
-          const restY = binPos.bottom - offset.bottom - 96;
+          const restX = binPos.left + offset.left * k;
+          const restY = binPos.bottom - offset.bottom * k - sz;
           // Blend from the resting slot to this record's place in the fan.
           const s = Math.max(0, binSpread?.get() ?? 0);
           const t = fanSlot(fanRef.current.index, fanRef.current.count);
-          const rise = FAN_RISE - FAN_DROOP * t * t;
-          const fanX = binPos.left + (binPos.width - 96) / 2 + FAN_SPREAD * t;
-          const fanY = binPos.bottom - offset.bottom - 96 - rise;
+          const rise = (FAN_RISE - FAN_DROOP * t * t) * k;
+          const fanX = binPos.left + (binPos.width - sz) / 2 + FAN_SPREAD * k * t;
+          const fanY = restY - rise;
           const tx = restX + (fanX - restX) * s;
           const ty = restY + (fanY - restY) * s;
           x.set(tx);
@@ -239,27 +249,28 @@ export function Record({
           // Cut the lip's rectangle (in this record's local px) out of the
           // record, so it's hidden only where it's actually behind the lip —
           // a record leaning past the crate's side stays whole.
-          const lipL = binPos.left - LIP_RING - tx;
-          const lipR = binPos.left + binPos.width + LIP_RING - tx;
-          const lipT = binPos.bottom - LIP_H - LIP_RING - ty;
+          const lipL = binPos.left - LIP_RING * k - tx;
+          const lipR = binPos.left + binPos.width + LIP_RING * k - tx;
+          const lipT = binPos.bottom - (LIP_H + LIP_RING) * k - ty;
           const lo = -CLIP_PAD;
-          const hi = 96 + CLIP_PAD;
+          const hi = sz + CLIP_PAD;
           clipPath.set(
             `polygon(${lo}px ${lo}px, ${hi}px ${lo}px, ${hi}px ${hi}px, ${lipR}px ${hi}px, ` +
             `${lipR}px ${lipT}px, ${lipL}px ${lipT}px, ${lipL}px ${hi}px, ${lo}px ${hi}px)`
           );
           // Match scale origin to the crate's transform-origin (sticker center)
           if (binPos.cx !== undefined) {
-            originX.set((binPos.cx - tx) / 96);
-            originY.set((binPos.cy - ty) / 96);
+            originX.set((binPos.cx - tx) / sz);
+            originY.set((binPos.cy - ty) / sz);
           }
         }
       } else if (state === 'docked') {
         const platter = platterRef.current;
         if (platter) {
           const r = platter.getBoundingClientRect();
-          x.set(r.left + (r.width - 96) / 2);
-          y.set(r.top + (r.height - 96) / 2);
+          const sz = RECORD * scaleRef.current;
+          x.set(r.left + (r.width - sz) / 2);
+          y.set(r.top + (r.height - sz) / 2);
         }
       }
       rafId = requestAnimationFrame(loop);
@@ -317,8 +328,8 @@ export function Record({
         position: 'fixed',
         left: 0,
         top: 0,
-        width: '96px',
-        height: '96px',
+        width: size,
+        height: size,
         x,
         y,
         zIndex: isInBin && fanHover ? binZIndex + 10 : z,

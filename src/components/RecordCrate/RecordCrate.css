@@ -64,8 +64,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 48px;
-  height: 48px;
+  width: 50%; /* 48px on a 96px record; scales with it */
+  height: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: var(--label, #ff6b5e);

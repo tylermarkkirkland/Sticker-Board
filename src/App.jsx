@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion, useSpring } from 'framer-motion';
 import StickyNote from './components/StickyNote/StickyNote';
 import RecordPlayer from './components/RecordPlayer/RecordPlayer';
@@ -37,8 +37,29 @@ const loadFound = () => {
   }
 };
 
+// Stickers are sized for a reference board (Tyler's: 1528×766). On other
+// screens they scale with the board so the arrangement keeps its
+// proportions: by whichever side is tighter, floored so text stays
+// readable and capped so huge screens don't get cartoonish.
+const REF_BOARD = { w: 1528, h: 766 };
+const SCALE_MIN = 0.75;
+const SCALE_MAX = 1.3;
+const boardScaleFor = (w, h) =>
+  Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.min(w / REF_BOARD.w, h / REF_BOARD.h)));
+
 export default function App() {
   const padRef = useRef(null);
+  const [boardScale, setBoardScale] = useState(1);
+
+  useEffect(() => {
+    const pad = padRef.current;
+    if (!pad) return undefined;
+    const update = () => setBoardScale(boardScaleFor(pad.clientWidth, pad.clientHeight));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(pad);
+    return () => ro.disconnect();
+  }, []);
   const platterRef = useRef(null);
   const crateRef = useRef(null);
   const playerRef = useRef(null);
@@ -234,7 +255,7 @@ export default function App() {
 
   return (
     <main className="wall">
-      <div className="pad" ref={padRef}>
+      <div className="pad" ref={padRef} style={{ '--board-scale': boardScale }}>
         <span className="pad-screw pad-screw--left" aria-hidden="true" />
         <span className="pad-screw pad-screw--right" aria-hidden="true" />
 
@@ -293,6 +314,7 @@ export default function App() {
             binZIndex={binZIndex}
             binScaleMotion={binScaleMotion}
             binSpread={binSpread}
+            boardScale={boardScale}
             fanIndex={inBinIds.indexOf(song.id)}
             fanCount={inBinIds.length}
             onFanHover={handleFanHover}
