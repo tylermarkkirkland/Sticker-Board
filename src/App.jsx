@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useSpring } from 'framer-motion';
+import { useReducedMotion, useSpring } from 'framer-motion';
 import StickyNote from './components/StickyNote/StickyNote';
 import RecordPlayer from './components/RecordPlayer/RecordPlayer';
 import RecordCrate, { Record } from './components/RecordCrate/RecordCrate';
@@ -40,6 +40,62 @@ export default function App() {
 
   // Spring that records mirror when the crate is hovered/dragged
   const binScaleMotion = useSpring(1, { stiffness: 320, damping: 26 });
+
+  // Crate fan: 0 = records resting in the crate, 1 = fanned out above it.
+  // The crate and every in-crate record form one hover zone, with a short
+  // grace period so moving the cursor between them doesn't collapse the fan.
+  const reduceMotion = useReducedMotion();
+  const binSpread = useSpring(0, { stiffness: 260, damping: 22 });
+  const crateHovered = useRef(false);
+  const fanHovered = useRef(new Set());
+  const fanCloseTimer = useRef(null);
+  const crateDragging = useRef(false);
+  const [inBinIds, setInBinIds] = useState(() => songs.map((s) => s.id));
+
+  const updateFan = () => {
+    // Folded away while the crate itself is being dragged.
+    const open = !crateDragging.current && (crateHovered.current || fanHovered.current.size > 0);
+    clearTimeout(fanCloseTimer.current);
+    const apply = (on) => {
+      if (reduceMotion) binSpread.jump(on ? 1 : 0);
+      else binSpread.set(on ? 1 : 0);
+      // The crate owns its scale while dragging (1.07 lift).
+      if (!crateDragging.current) binScaleMotion.set(on ? 1.04 : 1);
+    };
+    if (open) apply(true);
+    else fanCloseTimer.current = setTimeout(() => apply(false), 140);
+  };
+
+  const handleBinHoverChange = (hovering) => {
+    crateHovered.current = hovering;
+    updateFan();
+  };
+
+  const handleBinDragChange = (dragging) => {
+    crateDragging.current = dragging;
+    if (dragging) {
+      clearTimeout(fanCloseTimer.current);
+      binSpread.set(0);
+    } else {
+      updateFan();
+    }
+  };
+
+  const handleFanHover = (id, hovering) => {
+    if (hovering) fanHovered.current.add(id);
+    else fanHovered.current.delete(id);
+    updateFan();
+  };
+
+  const handleBinStateChange = (id, inBin) => {
+    setInBinIds((ids) => {
+      const has = ids.includes(id);
+      if (inBin === has) return ids;
+      // Keep crate order stable (song order), so the fan never reshuffles.
+      const next = inBin ? [...ids, id] : ids.filter((x) => x !== id);
+      return songs.map((s) => s.id).filter((x) => next.includes(x));
+    });
+  };
 
   // Calculate player scale based on state
   const playerScale = playerIsDragging ? 1.07 : playerIsHovering ? 1.04 : 1;
@@ -174,6 +230,8 @@ export default function App() {
           constraintsRef={padRef}
           crateRef={crateRef}
           onBinMove={handleBinMove}
+          onBinHoverChange={handleBinHoverChange}
+          onBinDragChange={handleBinDragChange}
           binScaleMotion={binScaleMotion}
         />
 
@@ -196,6 +254,11 @@ export default function App() {
             getBinPosition={getBinPosition}
             binZIndex={binZIndex}
             binScaleMotion={binScaleMotion}
+            binSpread={binSpread}
+            fanIndex={inBinIds.indexOf(song.id)}
+            fanCount={inBinIds.length}
+            onFanHover={handleFanHover}
+            onBinStateChange={handleBinStateChange}
             playerScale={playerScale}
           />
         ))}

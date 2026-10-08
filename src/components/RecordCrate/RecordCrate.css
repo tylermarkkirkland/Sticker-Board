@@ -27,11 +27,15 @@
     inset 0 5px 9px rgba(0, 0, 0, 0.4);
 }
 
-/* Clip the bottom of in-bin records so they appear to sit behind the front lip.
-   Negative insets on top/left/right preserve the 3px die-cut shadow on those edges.
-   Bottom value: 20px DOM overlap + 4px front lip box-shadow spread = 24px. */
-.record-floating.is-in-bin {
-  clip-path: inset(-4px -4px 24px -4px);
+/* In-bin records hide their bottom behind the front lip with an inline
+   clip-path (see Record in RecordCrate.jsx): 24px at rest (20px overlap + 4px
+   lip ring), shrinking as the fan lifts them out. Side/top insets are -12px
+   so the die-cut ring and the hover-grow are never cut off. */
+
+/* Inner layer that carries the fan tilt and hover-grow. */
+.record-tilt {
+  width: 100%;
+  height: 100%;
 }
 
 /* Records that float at pad level */
