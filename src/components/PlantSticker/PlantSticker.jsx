@@ -38,8 +38,9 @@ const NODES = [
   { x: 150, y: 157, side: 1, bud: { x: 131, y: 141, w: 33, h: 41 } },
   { x: 105, y: 90, side: -1, bud: { x: 91, y: 79, w: 30, h: 36 } },
 ];
-// Stem center line on base.png (it leans very slightly to the right).
-const stemX = (y) => 124 + ((y - 30) * 5) / 410;
+// Stem center line on base.png, measured from its edges (it leans very
+// slightly to the right).
+const stemX = (y) => 125.5 + ((y - 30) * 3) / 410;
 
 // Leaf art (unpadded size), with (ax, ay) = the tip of the leaf's own stem,
 // where it attaches and grows from. Larger leaves go lower on the plant.
@@ -59,8 +60,8 @@ const leafFor = (i) => {
 };
 const leafScale = (i) => 0.5 - i * 0.015; // lower leaves a touch bigger
 // Where a leaf's stem tip joins the main stem: just past the stem's center
-// line, a little below the bud (where the bud's own stalk joined).
-const leafRoot = (n) => ({ x: stemX(n.y) + n.side * 2, y: n.y + 8 });
+// line, on the little nub where the bud's own stalk joined (~13px below).
+const leafRoot = (n) => ({ x: stemX(n.y) + n.side * 2, y: n.y + 13 });
 
 // Flower stages, anchored at the bottom of their stem, which sits on the
 // stem just under the top bud of base.png.
