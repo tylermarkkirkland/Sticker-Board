@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
+import Peel from '../Peel/Peel';
 import discoveries from '../../data/discoveries';
 import './PlantSticker.css';
 
@@ -130,6 +131,29 @@ const pct = (x, y) => ({
 });
 
 const spring = { type: 'spring', stiffness: 170, damping: 13 };
+
+// Corner peel on the pot's bottom-right. The pot's sides slant, so its
+// corner is ~104° rather than square: the fold starts at the outline's
+// outermost point there and points 52° below horizontal (splitting the
+// corner evenly). The flap takes the shape of base.png's border silhouette.
+// All in rendered plant-box px.
+const POT_TIP_ANGLE = (52 * Math.PI) / 180;
+const PLANT_PEEL = {
+  sides: [{
+    x: (PAD.side + 200) * SCALE,
+    y: (PAD.top + 644) * SCALE,
+    nx: Math.cos(POT_TIP_ANGLE),
+    ny: Math.sin(POT_TIP_ANGLE),
+  }],
+  size: 16,
+  back: '#f4f1ea',
+  mask: {
+    src: '/plant/base-border.png',
+    size: `${(BASE.w + PADS.base * 2) * SCALE}px auto`,
+    x: (PAD.side - PADS.base) * SCALE,
+    y: (PAD.top - PADS.base) * SCALE,
+  },
+};
 
 /**
  * PlantSticker — a little potted plant that grows as visitors explore.
@@ -288,30 +312,35 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
       label={`Little plant: ${found.length} of ${discoveries.length} leaves grown${bloomed ? ', in full bloom' : ''}`}
     >
       <div className="plant" ref={scope} style={{ width: BOX.w * SCALE, height: BOX.h * SCALE }}>
-        {/* Borders first, art on top: see PADS above. */}
-        <div className="plant-layer">{renderPieces('border')}</div>
-        <div className="plant-layer">{renderPieces('art')}</div>
+        {/* The peel wraps the art and the bud buttons, but not the hint
+            bubbles below: the fold line runs on past the pot, and the
+            lower hints would otherwise be cut while the corner is lifted. */}
+        <Peel {...PLANT_PEEL} fill>
+          {/* Borders first, art on top: see PADS above. */}
+          <div className="plant-layer">{renderPieces('border')}</div>
+          <div className="plant-layer">{renderPieces('art')}</div>
 
-        {/* Hit targets + hints. Real buttons so keyboard and screen-reader
-            users can read the hints too. */}
-        {NODES.map((n, i) => {
-          const item = discoveries[i];
-          const isFound = found.includes(item.id);
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`plant-node${activeNode === i ? ' is-active' : ''}${isFound ? ' is-found' : ''}`}
-              style={pct(n.x, n.y)}
-              aria-label={isFound ? `Leaf grown: ${item.done}` : `Hint: ${item.hint}`}
-              onPointerEnter={() => setActiveNode(i)}
-              onPointerLeave={() => setActiveNode((cur) => (cur === i ? null : cur))}
-              onFocus={() => setActiveNode(i)}
-              onBlur={() => setActiveNode((cur) => (cur === i ? null : cur))}
-              onClick={() => setActiveNode(i)}
-            />
-          );
-        })}
+          {/* Hit targets + hints. Real buttons so keyboard and screen-reader
+              users can read the hints too. */}
+          {NODES.map((n, i) => {
+            const item = discoveries[i];
+            const isFound = found.includes(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`plant-node${activeNode === i ? ' is-active' : ''}${isFound ? ' is-found' : ''}`}
+                style={pct(n.x, n.y)}
+                aria-label={isFound ? `Leaf grown: ${item.done}` : `Hint: ${item.hint}`}
+                onPointerEnter={() => setActiveNode(i)}
+                onPointerLeave={() => setActiveNode((cur) => (cur === i ? null : cur))}
+                onFocus={() => setActiveNode(i)}
+                onBlur={() => setActiveNode((cur) => (cur === i ? null : cur))}
+                onClick={() => setActiveNode(i)}
+              />
+            );
+          })}
+        </Peel>
 
         {activeItem && tipNode && (
           <motion.div
