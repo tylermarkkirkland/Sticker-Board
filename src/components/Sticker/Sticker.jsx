@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import Peel from '../Peel/Peel';
 import './Sticker.css';
@@ -57,6 +57,23 @@ export default function Sticker({
 }) {
   const [zIndex, setZIndex] = useState(z);
   const [isDragging, setIsDragging] = useState(false);
+  // Board bounds only apply while the sticker is held. Framer re-scales the
+  // position of anything with ref constraints on every window resize, which
+  // fights our percentage placement and slides stickers sideways; with no
+  // constraints between drags, it leaves them alone.
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!held) return undefined;
+    // Released anywhere: drop the bounds a tick later, after Framer has
+    // finished handling the drop.
+    const release = () => setTimeout(() => setHeld(false), 0);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [held]);
   // When the OS/browser requests reduced motion, we drop the entrance
   // slide/scale and any ambient drift so pieces just appear. Interaction
   // feedback (drag, hover, dock) is user-initiated and stays intact.
@@ -103,7 +120,7 @@ export default function Sticker({
       className={`sticker ${isDragging ? 'is-lifted' : ''}`}
       style={dragStyle}
       drag
-      dragConstraints={constraintsRef}
+      dragConstraints={held ? constraintsRef : false}
       dragElastic={0}
       dragMomentum={false}
       onDragStart={(event, info) => {
@@ -117,7 +134,10 @@ export default function Sticker({
         setTimeout(() => setIsDragging(false), 0);
         onDragEnd?.(event, info);
       }}
-      onPointerDown={lift}
+      onPointerDown={() => {
+        lift();
+        setHeld(true);
+      }}
       onHoverStart={onHoverStart}
       onHoverEnd={onHoverEnd}
       // Lift on grab, hold it the whole drag, soft-settle on release.
