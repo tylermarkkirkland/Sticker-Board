@@ -63,6 +63,25 @@ const leafScale = (i) => 0.5 - i * 0.015; // lower leaves a touch bigger
 // line, on the little nub where the bud's own stalk joined (~13px below).
 const leafRoot = (n) => ({ x: stemX(n.y) + n.side * 2, y: n.y + 13 });
 
+// A leaf's white border stops where it meets the stem's own border, so the
+// stem keeps one clean, even strip of white and the leaf's green stalk
+// crosses it to join the stem. This is the distance from the stem's center
+// line to the outer edge of its border (≈6px half-width + ≈12px border,
+// minus a hair of overlap so no seam shows), in base.png px.
+const STEM_BORDER_REACH = 16;
+
+// clip-path that keeps only one side of the stem's border strip, in the
+// plant box's rendered px. Follows the stem's slight lean.
+const sideOfStem = (side) => {
+  const W = BOX.w * SCALE;
+  const H = BOX.h * SCALE;
+  const edge = (y) => (PAD.side + stemX(y) + side * STEM_BORDER_REACH) * SCALE;
+  const yTop = -PAD.top;
+  const yBot = BOX.h - PAD.top;
+  const far = side < 0 ? -60 : W + 60;
+  return `polygon(${edge(yTop)}px -60px, ${edge(yBot)}px ${H + 60}px, ${far}px ${H + 60}px, ${far}px -60px)`;
+};
+
 // Flower stages, anchored at the bottom of their stem, which sits on the
 // stem just under the top bud of base.png.
 const FLOWER_AT = { x: 124, y: 64 };
@@ -182,24 +201,35 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
         );
       })}
 
-      {/* Leaves — each grows from the stem where its bud was, once found */}
-      {NODES.map((n, i) => {
-        const art = leafFor(i);
-        const isFound = found.includes(discoveries[i].id);
-        return (
-          <motion.img
-            key={discoveries[i].id}
-            className="plant-piece"
-            src={src(art.name, layer)}
-            alt=""
-            draggable="false"
-            style={placeAt(art, leafRoot(n).x, leafRoot(n).y, leafScale(i))}
-            initial={false}
-            animate={{ scale: isFound ? 1 : 0, rotate: isFound ? 0 : 40 * n.side }}
-            transition={t(spring)}
-          />
-        );
-      })}
+      {/* Leaves — each grows from the stem where its bud was, once found.
+          In the border layer, each side's leaf borders are trimmed at the
+          stem's border (see sideOfStem). */}
+      {[-1, 1].map((side) => (
+        <div
+          key={side}
+          className="plant-layer"
+          style={layer === 'border' ? { clipPath: sideOfStem(side) } : undefined}
+        >
+          {NODES.map((n, i) => {
+            if (n.side !== side) return null;
+            const art = leafFor(i);
+            const isFound = found.includes(discoveries[i].id);
+            return (
+              <motion.img
+                key={discoveries[i].id}
+                className="plant-piece"
+                src={src(art.name, layer)}
+                alt=""
+                draggable="false"
+                style={placeAt(art, leafRoot(n).x, leafRoot(n).y, leafScale(i))}
+                initial={false}
+                animate={{ scale: isFound ? 1 : 0, rotate: isFound ? 0 : 40 * n.side }}
+                transition={t(spring)}
+              />
+            );
+          })}
+        </div>
+      ))}
 
       {/* Flower opens over the top bud of base.png, covering it. */}
       <AnimatePresence>
