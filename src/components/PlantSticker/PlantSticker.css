@@ -3,18 +3,10 @@
   transform-origin: 50% 95%; /* wiggles from the pot, like it's rooted */
 }
 
-/* All art pieces share one live die-cut border (filter defined inline in
-   PlantSticker.jsx), so leaves and flower join the stem seamlessly. */
-.plant-art {
+/* Two stacked layers: every piece's border, then every piece's art. */
+.plant-layer {
   position: absolute;
   inset: 0;
-  filter: url(#plant-outline);
-}
-.plant-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
 }
 
 /* Every piece of sticker-sheet art is absolutely placed in base.png px
