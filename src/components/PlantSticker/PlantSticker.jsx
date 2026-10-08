@@ -82,13 +82,21 @@ const sideOfStem = (side) => {
   return `polygon(${edge(yTop)}px -60px, ${edge(yBot)}px ${H + 60}px, ${far}px ${H + 60}px, ${far}px -60px)`;
 };
 
-// Flower stages, anchored at the bottom of their stem, which sits on the
-// stem just under the top bud of base.png.
-const FLOWER_AT = { x: 124, y: 64 };
+// The closed bud that tops the stem was cut out of base.png into
+// top-bud.png (box = where it sat on base.png, padding included), so the
+// stem ends at y = 51. On bloom it shrinks away and the flower head takes
+// its place.
+const STEM_TOP = 51;
+const TOP_BUD = { x: 95, y: -2, w: 60, h: 60 };
+
+// Flower stages with their own stems trimmed off just under the sepals, so
+// the plant's one stem runs straight up into the flower. (ax, ay) = the
+// center of the sepals' base, seated on the top of the stem.
+const FLOWER_AT = { x: stemX(STEM_TOP), y: STEM_TOP + 2 };
 const FLOWER = [
-  { name: 'flower-bud', w: 124, h: 208, ax: 62, ay: 194, scale: 0.42 },
-  { name: 'flower-half', w: 186, h: 231, ax: 81, ay: 217, scale: 0.5 },
-  { name: 'flower-full', w: 292, h: 261, ax: 135, ay: 248, scale: 0.6 },
+  { name: 'flower-bud', w: 124, h: 208, ax: 62, ay: 142, scale: 0.42 },
+  { name: 'flower-half', w: 186, h: 231, ax: 83, ay: 170, scale: 0.5 },
+  { name: 'flower-full', w: 292, h: 261, ax: 140, ay: 207, scale: 0.6 },
 ];
 const BLOOM_STEP_MS = 420;
 
@@ -180,6 +188,18 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
         style={placeBox(0, 0, BASE.w, BASE.h, PADS.base)}
       />
 
+      {/* The closed bud on top — gives way to the flower on bloom */}
+      <motion.img
+        className="plant-piece"
+        src={src('top-bud', layer)}
+        alt=""
+        draggable="false"
+        style={{ ...placeBox(TOP_BUD.x, TOP_BUD.y, TOP_BUD.w, TOP_BUD.h, 0), transformOrigin: '50% 90%' }}
+        initial={false}
+        animate={{ scale: stage >= 0 ? 0 : 1, opacity: stage >= 0 ? 0 : 1 }}
+        transition={t({ duration: 0.2 })}
+      />
+
       {/* Buds — shrink back into the stem as their leaf grows */}
       {NODES.map((n, i) => {
         const isFound = found.includes(discoveries[i].id);
@@ -231,7 +251,7 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
         </div>
       ))}
 
-      {/* Flower opens over the top bud of base.png, covering it. */}
+      {/* Flower head opens on the top of the stem, in the top bud's place. */}
       <AnimatePresence>
         {stage >= 0 && (
           <motion.img
