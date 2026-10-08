@@ -7,9 +7,10 @@ const PROFILE_URL = 'https://x.com/TylerKirkl69749';
  * XLink — a black X (Twitter) badge sticker. Drag to reposition; a clean click
  * (not a drag) opens the profile in a new tab.
  */
-export default function XLink({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef }) {
+export default function XLink({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef, onOpen }) {
   const open = () => {
     window.open(PROFILE_URL, '_blank', 'noopener,noreferrer');
+    onOpen?.();
   };
 
   return (

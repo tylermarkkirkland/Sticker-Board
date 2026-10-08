@@ -7,15 +7,35 @@ import BookStack from './components/BookStack/BookStack';
 import BookCovers from './components/BookCovers/BookCovers';
 import FaceSticker from './components/FaceSticker/FaceSticker';
 import XLink from './components/XLink/XLink';
+import PlantSticker from './components/PlantSticker/PlantSticker';
 import ExpandedOverlay from './components/ExpandedOverlay/ExpandedOverlay';
 import { useTrackPreview } from './hooks/useTrackPreview';
 import songs from './data/songs';
+import discoveries from './data/discoveries';
 import { getMood } from './data/reactions';
 import './App.css';
 
 const NOTES = [
   { id: 'n1', variant: 'yellow', small: false, x: '3.3%', y: '13.7%', rotate: -2, defaultText: 'Hello, welcome to my sticker board :)' },
 ];
+
+// Plant progress is a per-visitor nicety, so it lives in localStorage. Any
+// failure (private mode, blocked storage) just means a fresh plant.
+// Add ?resetplant to the URL to start over.
+const PLANT_KEY = 'sticker-board:plant';
+const loadFound = () => {
+  try {
+    if (new URLSearchParams(window.location.search).has('resetplant')) {
+      localStorage.removeItem(PLANT_KEY);
+      return [];
+    }
+    const saved = JSON.parse(localStorage.getItem(PLANT_KEY) ?? '[]');
+    const ids = discoveries.map((d) => d.id);
+    return Array.isArray(saved) ? saved.filter((id) => ids.includes(id)) : [];
+  } catch {
+    return [];
+  }
+};
 
 export default function App() {
   const padRef = useRef(null);
@@ -26,9 +46,26 @@ export default function App() {
 
   const [currentMood, setCurrentMood] = useState('neutral');
 
+  // Plant: each discovery grows a leaf; all of them make it bloom.
+  const [found, setFound] = useState(loadFound);
+  const discover = (id) => {
+    setFound((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      try {
+        localStorage.setItem(PLANT_KEY, JSON.stringify(next));
+      } catch {
+        // Storage unavailable: the leaf still grows for this visit.
+      }
+      return next;
+    });
+  };
+
   const handleNoteTextChange = (id, text) => {
     if (id !== 'n1') return;
-    setCurrentMood(getMood(text));
+    const mood = getMood(text);
+    setCurrentMood(mood);
+    if (mood !== 'neutral') discover(mood); // 'happy' | 'sad' | 'secret'
   };
 
   // Track bin and player positions
@@ -84,6 +121,7 @@ export default function App() {
     }
     setDockedId(song.id);
     play(song);
+    discover('record');
   };
 
   const releaseDock = (songId) => {
@@ -207,7 +245,10 @@ export default function App() {
           enterDelay={delay(1)}
           bringToFront={bringToFront}
           constraintsRef={padRef}
-          onExpand={() => setBooksOpen(true)}
+          onExpand={() => {
+            setBooksOpen(true);
+            discover('books');
+          }}
         />
 
         {NOTES.map((note, i) => (
@@ -244,6 +285,17 @@ export default function App() {
           enterDelay={delay(4)}
           bringToFront={bringToFront}
           constraintsRef={padRef}
+          onOpen={() => discover('x')}
+        />
+
+        <PlantSticker
+          x="68.0%"
+          y="31.0%"
+          rotate={-3}
+          enterDelay={delay(5)}
+          bringToFront={bringToFront}
+          constraintsRef={padRef}
+          found={found}
         />
 
         <p className="pad-hint">drag · click · edit · play</p>
