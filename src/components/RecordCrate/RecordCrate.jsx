@@ -204,6 +204,7 @@ export function Record({
   useEffect(() => {
     onBinStateChange?.(song.id, state === 'in-bin');
     if (state !== 'in-bin') {
+      clipPath.set('none');
       animate(tilt, 0, { type: 'spring', stiffness: 320, damping: 26 });
       if (fanHover) {
         setFanHover(false);
@@ -272,6 +273,7 @@ export function Record({
   };
 
   const handleDragStart = () => {
+    clipPath.set('none'); // out of the crate: nothing is behind the lip now
     if (state === 'in-bin' || state === 'docked') setState('free');
   };
 
@@ -320,7 +322,11 @@ export function Record({
         x,
         y,
         zIndex: isInBin && fanHover ? binZIndex + 10 : z,
-        ...(isInBin ? { scale: binScaleMotion, originX, originY, clipPath } : {}),
+        // clipPath is always bound (not only in-bin): Framer leaves a style
+        // in place when its key disappears, so the lip clip would otherwise
+        // stick to a record after it's pulled out of the crate.
+        clipPath,
+        ...(isInBin ? { scale: binScaleMotion, originX, originY } : {}),
       }}
       drag
       dragConstraints={constraintsRef}
