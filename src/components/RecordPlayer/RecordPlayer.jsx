@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
+import { AnimatePresence, cancelFrame, frame, motion, useMotionValue } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import './RecordPlayer.css';
 
@@ -65,16 +65,18 @@ export default function RecordPlayer({
     });
   };
 
-  // Report position continuously using requestAnimationFrame
+  // Runs in Framer's frame loop: report the player in the read step and move
+  // the tonearm in the update step, so both land in the same frame as the
+  // player instead of trailing it by one.
   useEffect(() => {
-    let rafId;
-    const loop = () => {
-      reportPosition();
-      syncArm();
-      rafId = requestAnimationFrame(loop);
+    reportPosition();
+    syncArm();
+    frame.read(reportPosition, true);
+    frame.update(syncArm, true);
+    return () => {
+      cancelFrame(reportPosition);
+      cancelFrame(syncArm);
     };
-    loop();
-    return () => cancelAnimationFrame(rafId);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDrag = (event, info) => {

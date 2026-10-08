@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { animate, motion, useMotionValue } from 'framer-motion';
+import { animate, cancelFrame, frame, motion, useMotionValue } from 'framer-motion';
 import Sticker from '../Sticker/Sticker';
 import Peel from '../Peel/Peel';
 import './RecordCrate.css';
@@ -46,14 +46,13 @@ export default function RecordCrate({
     });
   };
 
+  // Runs in Framer's frame loop (read step), so records can follow the crate
+  // in the same frame's update step instead of trailing a frame behind.
   useEffect(() => {
-    let rafId;
-    const loop = () => {
-      reportPosition();
-      rafId = requestAnimationFrame(loop);
-    };
+    const loop = () => reportPosition();
     loop();
-    return () => cancelAnimationFrame(rafId);
+    frame.read(loop, true);
+    return () => cancelFrame(loop);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Hover scale is applied by App, which treats the crate and its fanned
@@ -225,7 +224,8 @@ export function Record({
   useEffect(() => {
     if (state !== 'in-bin' && state !== 'docked') return;
 
-    let rafId;
+    // Framer's update step: after the crate/player report (read step) and
+    // before Framer renders, so the record moves in the same frame.
     const loop = () => {
       if (state === 'in-bin') {
         const binPos = getBinPosition();
@@ -273,11 +273,26 @@ export function Record({
           y.set(r.top + (r.height - sz) / 2);
         }
       }
-      rafId = requestAnimationFrame(loop);
     };
     loop();
-    return () => cancelAnimationFrame(rafId);
+    frame.update(loop, true);
+    return () => cancelFrame(loop);
   }, [state, slot]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Board bounds only while held: Framer re-positions anything with ref
+  // constraints on window resize, which flashed records toward the corner
+  // for a frame before the crate/player tracking pulled them back.
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!held) return undefined;
+    const release = () => setTimeout(() => setHeld(false), 0);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [held]);
 
   const lift = () => {
     if (bringToFront) setZ(bringToFront());
@@ -340,10 +355,13 @@ export function Record({
         ...(isInBin ? { scale: binScaleMotion, originX, originY } : {}),
       }}
       drag
-      dragConstraints={constraintsRef}
+      dragConstraints={held ? constraintsRef : false}
       dragElastic={0}
       dragMomentum={false}
-      onPointerDown={lift}
+      onPointerDown={() => {
+        lift();
+        setHeld(true);
+      }}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onPointerEnter={handleHoverStart}
