@@ -1,40 +1,31 @@
 .plant {
   position: relative;
-  width: 149.5px;  /* 130 × 1.15 */
-  height: 230px;   /* 200 × 1.15 */
   transform-origin: 50% 95%; /* wiggles from the pot, like it's rooted */
 }
 
-.plant-art {
+/* Every piece of sticker-sheet art is absolutely placed in base.png px
+   (converted in PlantSticker.jsx). */
+.plant-piece {
+  position: absolute;
   display: block;
-  overflow: visible;
   pointer-events: none;
+  user-select: none;
 }
 
-/* Unfound nodes: little buds waiting for a leaf. */
-.plant-bud {
-  fill: #b7dc8a;
-  stroke: #4f8a3c;
-  stroke-width: 1.6;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: fill 0.15s ease;
-}
-.plant-bud.is-active {
-  fill: #e4f5c8;
-}
-
-/* Invisible hit target centered on each node. */
+/* Hit target centered on each bud. A soft ring shows which bud you're on. */
 .plant-node {
   position: absolute;
-  width: 26px;
-  height: 22px;
-  margin: -11px 0 0 -13px;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
   cursor: help;
+}
+.plant-node.is-active:not(.is-found) {
+  box-shadow: 0 0 0 2.5px rgba(255, 253, 244, 0.9);
 }
 .plant-node:focus-visible {
   outline: 2.5px solid var(--sky);
@@ -60,11 +51,11 @@
   translate: 0 -50%;
 }
 .plant-tip--left {
-  right: calc(50% + 14px);
+  right: calc(50% + 30px);
   transform-origin: right center;
 }
 .plant-tip--right {
-  left: calc(50% + 14px);
+  left: calc(50% + 30px);
   transform-origin: left center;
 }
 .plant-tip.is-found {
