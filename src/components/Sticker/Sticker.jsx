@@ -15,7 +15,8 @@ import './Sticker.css';
  *    drag, and a floating sticker keeps bobbing around its new drop spot.
  *
  * Props:
- *  - x, y           starting position (any CSS length, e.g. "20%" or 120)
+ *  - x, y           starting position of the sticker's center (any CSS
+ *                   length, e.g. "20%" or 120)
  *  - rotate         resting tilt in degrees (default 0)
  *  - z              base stacking order
  *  - bringToFront   () => number, hands back the next top z-index

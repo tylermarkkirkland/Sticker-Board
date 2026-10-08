@@ -1,5 +1,10 @@
 .sticker {
   position: absolute;
+  /* x/y place the sticker's CENTER, so when stickers scale with the board
+     they grow and shrink around their middle instead of drifting toward
+     their top-left corner. (translate is separate from the transform Framer
+     uses for drag and hover.) */
+  translate: -50% -50%;
   cursor: grab;
   user-select: none;
   touch-action: none;
