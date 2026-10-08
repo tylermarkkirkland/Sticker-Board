@@ -145,7 +145,7 @@ const PLANT_PEEL = {
     nx: Math.cos(POT_TIP_ANGLE),
     ny: Math.sin(POT_TIP_ANGLE),
   }],
-  size: 16,
+  size: 10,
   back: '#f4f1ea',
   mask: {
     src: '/plant/base-border.png',
