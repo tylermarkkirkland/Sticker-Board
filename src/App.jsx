@@ -82,7 +82,7 @@ export default function App() {
     });
   };
 
-  // Start the plant over (from the flower's "Start over?" bubble).
+  // Reset the plant (from the flower's "Reset the plant?" bubble).
   const resetPlant = () => {
     setFound([]);
     try {

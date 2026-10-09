@@ -96,7 +96,7 @@
   outline-offset: 2px;
 }
 
-/* "Start the plant over?" bubble, sitting just above the flower. Same
+/* "Reset the plant?" bubble, sitting just above the flower. Same
    voice as the hint bubbles. */
 .plant-confirm {
   position: absolute;

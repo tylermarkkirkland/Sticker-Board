@@ -161,7 +161,7 @@ const PLANT_PEEL = {
  * hovering it shows a hint, and finding it grows a leaf there. When every
  * leaf has grown, the top bud opens into a flower.
  *
- * Once it's in full bloom, clicking the flower asks "Start the plant over?"
+ * Once it's in full bloom, clicking the flower asks "Reset the plant?"
  * so a visitor can go through the discoveries and watch it grow again.
  *
  * Props:
@@ -184,7 +184,7 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
   const yesRef = useRef(null);
   const flowerBtnRef = useRef(null);
 
-  // Close the "Start over?" bubble on Escape or a click anywhere else, and
+  // Close the "Reset the plant?" bubble on Escape or a click anywhere else, and
   // put focus on "Yes" when it opens so keyboard users land in it.
   useEffect(() => {
     if (!confirmOpen) return undefined;
@@ -399,7 +399,7 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
             type="button"
             className="plant-flower-btn"
             style={placeAt(FLOWER[2], FLOWER_AT.x, FLOWER_AT.y, FLOWER[2].scale)}
-            aria-label="Flower in full bloom. Start the plant over?"
+            aria-label="Flower in full bloom. Reset the plant?"
             aria-haspopup="dialog"
             aria-expanded={confirmOpen}
             onPointerDown={handleFlowerPointerDown}
@@ -413,7 +413,7 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
               ref={confirmRef}
               className="plant-confirm"
               role="dialog"
-              aria-label="Start the plant over"
+              aria-label="Reset the plant"
               style={pct(FLOWER_AT.x, FLOWER_AT.y - FLOWER[2].ay * FLOWER[2].scale)}
               initial={{ opacity: 0, y: 6, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -422,7 +422,7 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
               // Pressing inside the bubble shouldn't start dragging the plant.
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <p className="plant-confirm-text">Start the plant over?</p>
+              <p className="plant-confirm-text">Reset the plant?</p>
               <div className="plant-confirm-actions">
                 <button ref={yesRef} type="button" className="plant-confirm-btn plant-confirm-btn--yes" onClick={confirmReset}>
                   Yes
