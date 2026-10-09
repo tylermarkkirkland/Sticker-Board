@@ -82,6 +82,16 @@ export default function App() {
     });
   };
 
+  // Start the plant over (from the flower's "Start over?" bubble).
+  const resetPlant = () => {
+    setFound([]);
+    try {
+      localStorage.removeItem(PLANT_KEY);
+    } catch {
+      // Storage unavailable: it's reset for this visit.
+    }
+  };
+
   const handleNoteTextChange = (id, text) => {
     if (id !== 'n1') return;
     const mood = getMood(text);
@@ -381,6 +391,7 @@ export default function App() {
           bringToFront={bringToFront}
           constraintsRef={padRef}
           found={found}
+          onReset={resetPlant}
         />
 
         <p className="pad-hint">drag · click · edit · play</p>

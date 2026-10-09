@@ -161,11 +161,15 @@ const PLANT_PEEL = {
  * hovering it shows a hint, and finding it grows a leaf there. When every
  * leaf has grown, the top bud opens into a flower.
  *
+ * Once it's in full bloom, clicking the flower asks "Start the plant over?"
+ * so a visitor can go through the discoveries and watch it grow again.
+ *
  * Props:
  *  - found   array of discovery ids that have been found
+ *  - onReset called when the visitor confirms starting over
  *  - (plus the usual Sticker placement props)
  */
-export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef, found = [] }) {
+export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront, constraintsRef, found = [], onReset }) {
   const reduceMotion = useReducedMotion();
   const [activeNode, setActiveNode] = useState(null);
   const [scope, animate] = useAnimate();
@@ -174,6 +178,52 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
   // Flower stage: -1 none, 0 bud, 1 half-open, 2 full. Already bloomed on
   // load? Show it open; blooming live plays the stages in order.
   const [stage, setStage] = useState(bloomed ? 2 : -1);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const pressAt = useRef(null);
+  const confirmRef = useRef(null);
+  const yesRef = useRef(null);
+  const flowerBtnRef = useRef(null);
+
+  // Close the "Start over?" bubble on Escape or a click anywhere else, and
+  // put focus on "Yes" when it opens so keyboard users land in it.
+  useEffect(() => {
+    if (!confirmOpen) return undefined;
+    yesRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setConfirmOpen(false);
+        flowerBtnRef.current?.focus();
+      }
+    };
+    const onDown = (e) => {
+      if (!confirmRef.current?.contains(e.target) && !flowerBtnRef.current?.contains(e.target)) setConfirmOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onDown);
+    };
+  }, [confirmOpen]);
+
+  // Only fully open flowers can be clicked; reset closes the bubble too.
+  useEffect(() => {
+    if (stage !== 2) setConfirmOpen(false);
+  }, [stage]);
+
+  const handleFlowerPointerDown = (e) => {
+    pressAt.current = [e.clientX, e.clientY];
+  };
+  const handleFlowerClick = (e) => {
+    // A click at the end of dragging the plant by its flower isn't a click.
+    const [px, py] = pressAt.current ?? [e.clientX, e.clientY];
+    if (Math.hypot(e.clientX - px, e.clientY - py) > 5) return;
+    setConfirmOpen((open) => !open);
+  };
+  const confirmReset = () => {
+    setConfirmOpen(false);
+    onReset?.();
+  };
   const t = (transition) => (reduceMotion ? { duration: 0 } : transition);
 
   // A happy little wiggle whenever a new leaf grows, so it catches the eye
@@ -341,6 +391,56 @@ export default function PlantSticker({ x, y, rotate, z, enterDelay, bringToFront
             );
           })}
         </Peel>
+
+        {/* Full bloom: the flower becomes a button that offers a restart. */}
+        {stage === 2 && (
+          <button
+            ref={flowerBtnRef}
+            type="button"
+            className="plant-flower-btn"
+            style={placeAt(FLOWER[2], FLOWER_AT.x, FLOWER_AT.y, FLOWER[2].scale)}
+            aria-label="Flower in full bloom. Start the plant over?"
+            aria-haspopup="dialog"
+            aria-expanded={confirmOpen}
+            onPointerDown={handleFlowerPointerDown}
+            onClick={handleFlowerClick}
+          />
+        )}
+
+        <AnimatePresence>
+          {confirmOpen && (
+            <motion.div
+              ref={confirmRef}
+              className="plant-confirm"
+              role="dialog"
+              aria-label="Start the plant over"
+              style={pct(FLOWER_AT.x, FLOWER_AT.y - FLOWER[2].ay * FLOWER[2].scale)}
+              initial={{ opacity: 0, y: 6, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.92 }}
+              transition={t({ duration: 0.16 })}
+              // Pressing inside the bubble shouldn't start dragging the plant.
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <p className="plant-confirm-text">Start the plant over?</p>
+              <div className="plant-confirm-actions">
+                <button ref={yesRef} type="button" className="plant-confirm-btn plant-confirm-btn--yes" onClick={confirmReset}>
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="plant-confirm-btn"
+                  onClick={() => {
+                    setConfirmOpen(false);
+                    flowerBtnRef.current?.focus();
+                  }}
+                >
+                  No
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {activeItem && tipNode && (
           <motion.div
