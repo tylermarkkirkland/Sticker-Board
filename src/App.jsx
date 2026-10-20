@@ -94,7 +94,8 @@ export default function App() {
 
   const handleNoteTextChange = (id, text) => {
     if (id !== 'n1') return;
-    const mood = getMood(text);
+    const note = NOTES.find((n) => n.id === id);
+    const mood = getMood(text, note?.defaultText);
     setCurrentMood(mood);
     if (mood !== 'neutral') discover(mood); // 'happy' | 'sad' | 'secret'
   };

@@ -32,7 +32,7 @@ export const happyWords = [
   'not bad', 'not too bad', 'not terrible', 'not awful', "can't complain",
   'no complaints',
   // Symbols
-  ':)', ':-)', ':d', '<3', '❤️', '❤', '😊', '😀', '😃', '😄', '😁', '🙂',
+  ':-)', ':d', '<3', '❤️', '❤', '😊', '😀', '😃', '😄', '😁',
   '😍', '🥰', '👍', '🎉', '🙌', '👏', '💯', '⭐', '🌟', '🔥',
 ];
 
@@ -82,10 +82,17 @@ const toRegex = (word) => {
 const happyRegexes = happyWords.map(toRegex);
 const sadRegexes   = sadWords.map(toRegex);
 
-export function getMood(text) {
+// Lowercase and treat curly apostrophes (phones and Macs auto-insert them)
+// as straight.
+const normalize = (s) => s.toLowerCase().replace(/[‘’]/g, "'");
+
+// `ignore` is text that should never change the mood (the note's starting
+// text). It's blanked out with spaces, so only what the visitor typed counts.
+export function getMood(text, ignore = '') {
   if (!text?.trim()) return 'neutral';
-  // Treat curly apostrophes (phones and Macs auto-insert them) as straight.
-  const lower = text.toLowerCase().replace(/[‘’]/g, "'");
+  let lower = normalize(text);
+  const skip = normalize(ignore).trim();
+  if (skip) lower = lower.split(skip).join(' '.repeat(skip.length));
 
   // The match that ends furthest right wins (the most recent thing typed).
   // On a tie, the longer match wins, so "not good" beats "good".
