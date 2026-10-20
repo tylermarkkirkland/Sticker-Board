@@ -59,23 +59,29 @@ export function useTrackPreview() {
     a.volume = 0;
     fadeInStartRef.current = null; // cleared here; 'playing' event will stamp it
     songRef.current = song;
-    if (a.src !== window.location.origin + song.file) {
-      a.src = song.file;
+    const start = song.start || 0;
+    // The #t= fragment starts a fresh file at the right spot, so iOS (which
+    // ignores volume) never plays a blip from 0:00 before the seek below.
+    const src = start ? `${song.file}#t=${start}` : song.file;
+    if (a.src !== new URL(src, window.location.href).href) {
+      a.src = src;
     }
-    const startPlayback = () => {
+    const seek = () => {
       try {
-        a.currentTime = song.start || 0;
+        a.currentTime = start;
       } catch {
         /* seek may fail before metadata loads */
       }
-      a.play().catch(() => {});
     };
     if (a.readyState >= 1) {
-      startPlayback();
+      seek();
     } else {
-      a.addEventListener('loadedmetadata', startPlayback, { once: true });
-      a.load();
+      a.addEventListener('loadedmetadata', seek, { once: true });
     }
+    // Call play() right away, inside the drop that triggered it. Safari blocks
+    // sound that starts later (e.g. after the file loads), so waiting for
+    // metadata first left the record spinning in silence.
+    a.play().catch(() => {});
     setCurrentId(song.id);
   };
 

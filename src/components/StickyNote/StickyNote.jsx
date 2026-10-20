@@ -13,32 +13,35 @@ export default function StickyNote({
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(defaultText);
 
-  const beginEdit = () => {
+  // Make the note editable and focus it right now, inside the tap. iOS only
+  // shows the keyboard for a focus() that happens during the tap itself, so
+  // waiting for React to re-render (or a later frame) left no keyboard.
+  const startEditing = () => {
     lastValidText.current = text;
-    setIsEditing(true);
-    requestAnimationFrame(() => {
-      const el = editRef.current;
-      if (!el) return;
+    const el = editRef.current;
+    if (el) {
+      el.contentEditable = 'true';
       el.focus();
-      // Place cursor at end of text without selecting anything.
-      const sel = window.getSelection();
-      sel.collapse(el, el.childNodes.length);
-    });
+    }
+    setIsEditing(true);
+    return el;
+  };
+
+  const beginEdit = () => {
+    const el = startEditing();
+    if (!el) return;
+    // Place cursor at end of text without selecting anything.
+    window.getSelection().collapse(el, el.childNodes.length);
   };
 
   const beginEditSelectAll = () => {
-    lastValidText.current = text;
-    setIsEditing(true);
-    requestAnimationFrame(() => {
-      const el = editRef.current;
-      if (!el) return;
-      el.focus();
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    });
+    const el = startEditing();
+    if (!el) return;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   };
 
   const commit = () => {

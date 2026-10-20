@@ -3,7 +3,12 @@
   position: relative;
   width: 100vw;
   height: 100vh;
+  /* iOS Safari's 100vh runs under its toolbar; dvh is the visible height. */
+  height: 100dvh;
   overflow: hidden;
+  /* Stops Safari from highlighting the title while a sticker is dragged. */
+  -webkit-user-select: none;
+  user-select: none;
   display: grid;
   place-items: center;
   /* Eggshell plaster: a soft top-light wash over a warm off-white base. */
@@ -34,6 +39,7 @@
   position: relative;
   width: 88vw;
   height: 86vh;
+  height: 86dvh;
   border-radius: 16px;
   overflow: hidden;
   z-index: 1;

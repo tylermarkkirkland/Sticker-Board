@@ -23,6 +23,10 @@
   word-break: break-word;
   outline: none;
   caret-color: #333;
+  /* The board turns off text selection; the note's text must stay
+     selectable or Safari won't place a caret in it. */
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .sticky-note-text:empty::before {
